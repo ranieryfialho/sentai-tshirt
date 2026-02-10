@@ -1,26 +1,132 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* === TEMA CLARO (LIGHT MODE) === */
+    /* Fundo branco limpo */
+    --background: 0 0% 100%;
+    /* Texto principal: Azul Quase Preto (Mais legível que preto puro) */
+    --foreground: 222 47% 11%; 
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* PRIMARY: Sentai Blue - Azul Vibrante (Mantém identidade da marca) */
+    --primary: 217 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    /* SECONDARY: Sentai Red - Vermelho Heroico */
+    --secondary: 0 84% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted: Cinza mais escuro para melhor leitura no branco */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 25% 40%;
+
+    /* Accent: Fundo suave para hovers */
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 100% 50%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* === TEMA ESCURO (DARK MODE) === */
+    /* Fundo Azul Profundo (Geek/Gamer) */
+    --background: 220 60% 8%; 
+    --foreground: 210 40% 98%;
+
+    /* Cards levemente mais claros que o fundo */
+    --card: 220 50% 12%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 220 50% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    /* PRIMARY: Sentai Blue (Mesmo tom do Light para consistência) */
+    --primary: 217 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    /* SECONDARY: Sentai Red */
+    --secondary: 0 84% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted e Accents ajustados para o fundo escuro */
+    --muted: 217 30% 18%;
+    --muted-foreground: 215 20% 70%;
+
+    --accent: 217 30% 18%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 217 30% 20%;
+    --input: 217 30% 20%;
+    --ring: 217 100% 50%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground transition-colors duration-300;
+  }
+}
+
+/* --- VIEW TRANSITION API (Efeito de Círculo Magic UI) --- */
+/* Desabilita o fade padrão para que o círculo controle a animação */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Garante que o novo tema fique por cima durante a animação */
+::view-transition-new(root) {
+  z-index: 2147483646;
+}
+
+/* O tema antigo fica embaixo */
+::view-transition-old(root) {
+  z-index: 2147483646;
+}
+
+/* Ajuste específico para Dark Mode não piscar fundo branco */
+.dark::view-transition-old(root) {
+  z-index: 1;
+}
+.dark::view-transition-new(root) {
+  z-index: 9999;
+}
+
+/* --- CURSOR CUSTOMIZADO GLOBAL (SMART CURSOR FIX) --- */
+/* Força a ocultação do cursor nativo em TODOS os elementos interativos.
+   Isso impede que o navegador mostre a "mãozinha" ou a barra de texto,
+   garantindo que apenas o nosso cursor customizado (SVG) seja visível.
+*/
+html, 
+body, 
+a, 
+button, 
+input, 
+textarea, 
+select, 
+[role="button"],
+.cursor-pointer {
+  cursor: none !important;
 }
