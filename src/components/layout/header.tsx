@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Search, ShoppingBag, Menu, User, Phone, RefreshCw, Palette } from "lucide-react";
+import { Search, ShoppingBag, Menu, User } from "lucide-react";
 import { AnimatedThemeToggle } from "@/components/magicui/animated-theme-toggle"; 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,18 +20,19 @@ export function Header() {
     setMounted(true);
   }, []);
 
+  // ✅ ATUALIZADO: "/categoria/camisetas" -> "/loja"
   const navLinks = [
-    { name: "Início", href: "/" },
-    { name: "Camisetas", href: "/categoria/camisetas" },
-    { name: "Contato", href: "/contato" },
-    { name: "Trocas e Devoluções", href: "/trocas" },
+    { name: "Sentai Store", href: "/loja" },
     { name: "Pedidos Personalizados", href: "/personalizados" },
+    { name: "Trocas e Devoluções", href: "/trocas" },
+    { name: "Contato", href: "/contato" },
   ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/60 backdrop-blur-xl transition-all duration-300">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
         
+        {/* Lado Esquerdo: Menu Mobile + Logo */}
         <div className="flex items-center gap-2 md:gap-4">
           <Sheet>
             <SheetTrigger asChild>
@@ -59,6 +60,7 @@ export function Header() {
             </SheetContent>
           </Sheet>
 
+          {/* Logo (Home) */}
           <Link href="/" className="flex items-center gap-2 group">
             <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
               <span className="font-display font-bold text-xl">S</span>
@@ -69,6 +71,7 @@ export function Header() {
           </Link>
         </div>
 
+        {/* Centro: Menu Desktop */}
         <nav className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
             <Link 
@@ -81,6 +84,7 @@ export function Header() {
           ))}
         </nav>
 
+        {/* Lado Direito: Ações */}
         <div className="flex items-center gap-2 md:gap-4 flex-1 md:flex-none justify-end">
           <div className="relative hidden lg:block w-full max-w-[200px] xl:max-w-[240px]">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
