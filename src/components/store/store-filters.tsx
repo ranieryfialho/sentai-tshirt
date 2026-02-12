@@ -3,7 +3,6 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Check, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // Árvore de categorias baseada na sua imagem do painel Nuvemshop
@@ -69,20 +68,33 @@ export function StoreFilters({
   
   const [openSections, setOpenSections] = useState({
     categories: true,
-    price: true,
-    sizes: true,
+    price: false,
+    sizes: false,
   });
 
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
+  // ✅ NAVEGAÇÃO PARA CATEGORIA/SUBCATEGORIA COM TOGGLE
   const navigateToCategory = (categoryId: string, subcategoryId?: string) => {
+    // Verifica se está clicando no mesmo item já selecionado (TOGGLE)
+    const clickingSameCategory = !subcategoryId && currentCategory === categoryId && !currentSubcategory;
+    const clickingSameSubcategory = subcategoryId && currentSubcategory === subcategoryId;
+    
+    // Preserva os filtros de sort e size
     const params = new URLSearchParams();
     if (currentSort) params.set("sort", currentSort);
     if (currentSize) params.set("size", currentSize);
-    
     const queryString = params.toString();
+    
+    // Se clicar no mesmo item, desmarca e volta para /loja
+    if (clickingSameCategory || clickingSameSubcategory) {
+      router.push(`/loja${queryString ? `?${queryString}` : ''}`);
+      return;
+    }
+    
+    // Navega para a categoria/subcategoria
     const url = subcategoryId 
       ? `/categoria/${categoryId}/${subcategoryId}${queryString ? `?${queryString}` : ''}`
       : `/categoria/${categoryId}${queryString ? `?${queryString}` : ''}`;
@@ -90,9 +102,11 @@ export function StoreFilters({
     router.push(url);
   };
 
+  // ✅ ATUALIZA QUERY PARAMS (SORT E SIZE) COM TOGGLE
   const updateQueryParam = (key: string, value: string) => {
     const params = new URLSearchParams(window.location.search);
     
+    // Se já está selecionado, remove (TOGGLE)
     if (params.get(key) === value) {
       params.delete(key);
     } else {
@@ -197,7 +211,10 @@ export function StoreFilters({
 
       {/* Ordenação por Preço */}
       <div className="border-b border-white/10 pb-6">
-        <button onClick={() => toggleSection("price")} className="flex w-full items-center justify-between py-2 font-bold">
+        <button 
+          onClick={() => toggleSection("price")} 
+          className="flex w-full items-center justify-between py-2 font-bold hover:text-primary transition-colors"
+        >
           <span>Faixa de Preço</span>
           {openSections.price ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
@@ -231,7 +248,10 @@ export function StoreFilters({
 
       {/* Filtro de Tamanhos */}
       <div className="border-b border-white/10 pb-6">
-        <button onClick={() => toggleSection("sizes")} className="flex w-full items-center justify-between py-2 font-bold">
+        <button 
+          onClick={() => toggleSection("sizes")} 
+          className="flex w-full items-center justify-between py-2 font-bold hover:text-primary transition-colors"
+        >
           <span>Tamanhos</span>
           {openSections.sizes ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
