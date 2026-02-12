@@ -36,7 +36,6 @@ export default async function LojaPage({ searchParams }: Props) {
 
   let products = allProducts;
 
-  // Filtro por tamanho
   if (sizeFilter) {
     products = products.filter((p) => {
       return p.variants?.some(variant => 
@@ -45,14 +44,12 @@ export default async function LojaPage({ searchParams }: Props) {
     });
   }
 
-  // Ordenação por Preço
   if (sortFilter === 'price_asc') {
     products.sort((a, b) => a.price - b.price);
   } else if (sortFilter === 'price_desc') {
     products.sort((a, b) => b.price - a.price);
   }
 
-  // Paginação
   const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
   const paginatedProducts = products.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -61,6 +58,7 @@ export default async function LojaPage({ searchParams }: Props) {
 
   return (
     <main className="min-h-screen pt-24 pb-20 px-4 md:px-8 bg-background text-foreground">
+      
       <div className="max-w-7xl mx-auto">
         <Breadcrumbs 
           items={[
@@ -69,7 +67,6 @@ export default async function LojaPage({ searchParams }: Props) {
         />
         
         <div className="flex flex-col lg:flex-row gap-12">
-          {/* Sidebar Desktop */}
           <div className="hidden lg:block">
             <StoreFilters 
               currentSort={sortFilter || undefined}
@@ -92,7 +89,6 @@ export default async function LojaPage({ searchParams }: Props) {
                   </p>
                 </div>
 
-                {/* Filtro Mobile */}
                 <div className="lg:hidden w-full md:w-auto mt-4 md:mt-0">
                   <Sheet>
                     <SheetTrigger asChild>
@@ -113,31 +109,33 @@ export default async function LojaPage({ searchParams }: Props) {
               </div>
             </BlurFade>
 
-            {/* Grid de Produtos */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {paginatedProducts.length > 0 ? (
                 paginatedProducts.map((product, idx) => (
-                  <BlurFade key={product.id} delay={0.1 + (idx * 0.05)} inView>
+                  <BlurFade key={product.id} delay={0.2 + (idx * 0.05)} inView>
                     <ProductCard product={product} index={idx} />
                   </BlurFade>
                 ))
               ) : (
-                <div className="col-span-full py-20 text-center flex flex-col items-center gap-4 border border-dashed border-white/10 rounded-3xl bg-white/5">
-                  <p className="text-xl text-muted-foreground font-display">
-                    Nenhum produto encontrado com esses filtros.
-                  </p>
-                </div>
+                <BlurFade delay={0.3} inView>
+                  <div className="col-span-full py-20 text-center flex flex-col items-center gap-4 border border-dashed border-white/10 rounded-3xl bg-white/5">
+                    <p className="text-xl text-muted-foreground font-display">
+                      Nenhum produto encontrado com esses filtros.
+                    </p>
+                  </div>
+                </BlurFade>
               )}
             </div>
 
-            {/* Paginação */}
             {totalPages > 1 && (
-              <PaginationWrapper 
-                currentPage={currentPage}
-                totalPages={totalPages}
-                baseUrl="/loja"
-                searchParams={search as Record<string, string>}
-              />
+              <BlurFade delay={0.3} inView>
+                <PaginationWrapper 
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  baseUrl="/loja"
+                  searchParams={search as Record<string, string>}
+                />
+              </BlurFade>
             )}
           </div>
         </div>
