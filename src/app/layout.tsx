@@ -9,6 +9,7 @@ import { FavoritesSheet } from "@/components/favorites/favorites-sheet";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { SmoothCursor } from "@/components/magicui/smooth-cursor";
 import { Toaster } from "@/components/ui/sonner";
+import { Meteors } from "@/components/magicui/meteors";
 
 const inter = Inter({ 
   subsets: ["latin"], 
@@ -47,6 +48,10 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden h-full w-full bg-background">
+                <Meteors number={30} />
+            </div>
+
             <SmoothScroll>
               <SmoothCursor />
               <CartSheet />
