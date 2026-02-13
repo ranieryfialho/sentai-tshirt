@@ -1,23 +1,36 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { Meteors } from "@/components/magicui/meteors";
-import { SmoothCursor } from "@/components/magicui/smooth-cursor";
-import { SmoothScroll } from "@/components/smooth-scroll";
 import { CartSheet } from "@/components/cart/cart-sheet";
-import { FavoritesSheet } from "@/components/favorites/favorites-sheet"; // ⭐ NOVO
+import { FavoritesSheet } from "@/components/favorites/favorites-sheet";
+import { SmoothScroll } from "@/components/smooth-scroll";
+import { SmoothCursor } from "@/components/magicui/smooth-cursor";
+import { Toaster } from "@/components/ui/sonner";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" });
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space" });
+const inter = Inter({ 
+  subsets: ["latin"], 
+  variable: "--font-inter" 
+});
+
+const spaceGrotesk = Space_Grotesk({ 
+  subsets: ["latin"], 
+  variable: "--font-space-grotesk" 
+});
+
+const jetbrainsMono = JetBrains_Mono({ 
+  subsets: ["latin"], 
+  variable: "--font-jetbrains-mono" 
+});
 
 export const metadata: Metadata = {
-  title: "Sentai Tshirt",
-  description: "Loja Geek/Gamer Headless",
+  title: {
+    template: "%s | Sentai Tshirt",
+    default: "Sentai Tshirt - A Loja Oficial do Geek",
+  },
+  description: "Moda Geek, Anime, Tokusatsu e muito mais.",
 };
 
 export default function RootLayout({
@@ -27,47 +40,25 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body
-        className={cn(
-          "min-h-screen bg-background font-sans antialiased flex flex-col selection:bg-primary selection:text-white cursor-none",
-          inter.variable,
-          jetbrainsMono.variable,
-          spaceGrotesk.variable
-        )}
-      >
+      <body className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} font-sans antialiased bg-background text-foreground`}>
         <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {/* BACKGROUND FIXO */}
-          <div className="fixed inset-0 z-0 pointer-events-none">
-            <div className="absolute inset-0 bg-white dark:bg-background transition-colors duration-500" />
-            <div className="absolute inset-0 opacity-0 dark:opacity-100 transition-opacity duration-500 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-background to-black" />
-            <Meteors number={40} />
-            <div className="absolute inset-0 overflow-hidden opacity-0 dark:opacity-30 transition-opacity duration-500">
-              <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/30 rounded-full blur-[120px] animate-pulse" />
-              <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/30 rounded-full blur-[120px] animate-pulse delay-1000" />
-            </div>
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 dark:opacity-20 brightness-100 contrast-150 mix-blend-overlay" />
-          </div>
-
-          <SmoothCursor />
-          <CartSheet />
-          <FavoritesSheet /> {/* ⭐ NOVO */}
-
-          {/* CONTEÚDO NA FRENTE */}
-          <div className="relative z-10">
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
             <SmoothScroll>
+              <SmoothCursor />
+              <CartSheet />
+              <FavoritesSheet />
+              <Toaster />
+
               <Header />
-              <div className="flex-1">
+              <main className="min-h-screen">
                 {children}
-              </div>
+              </main>
               <Footer />
             </SmoothScroll>
-          </div>
-          
         </ThemeProvider>
       </body>
     </html>

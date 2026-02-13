@@ -5,7 +5,6 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, Check, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Árvore de categorias baseada na sua imagem do painel Nuvemshop
 const categories = [
   {
     id: "animes",
@@ -48,7 +47,7 @@ const categories = [
   },
 ];
 
-const sizes = ["P", "M", "G", "GG", "XG"];
+const SORTED_SIZES = ["P", "M", "G", "GG", "XG", "XXG"];
 
 type StoreFiltersProps = {
   currentCategory?: string;
@@ -61,7 +60,7 @@ export function StoreFilters({
   currentCategory, 
   currentSubcategory,
   currentSort,
-  currentSize 
+  currentSize,
 }: StoreFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -69,32 +68,27 @@ export function StoreFilters({
   const [openSections, setOpenSections] = useState({
     categories: true,
     price: false,
-    sizes: false,
+    sizes: true,
   });
 
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  // ✅ NAVEGAÇÃO PARA CATEGORIA/SUBCATEGORIA COM TOGGLE
   const navigateToCategory = (categoryId: string, subcategoryId?: string) => {
-    // Verifica se está clicando no mesmo item já selecionado (TOGGLE)
     const clickingSameCategory = !subcategoryId && currentCategory === categoryId && !currentSubcategory;
     const clickingSameSubcategory = subcategoryId && currentSubcategory === subcategoryId;
     
-    // Preserva os filtros de sort e size
     const params = new URLSearchParams();
     if (currentSort) params.set("sort", currentSort);
     if (currentSize) params.set("size", currentSize);
     const queryString = params.toString();
     
-    // Se clicar no mesmo item, desmarca e volta para /loja
     if (clickingSameCategory || clickingSameSubcategory) {
       router.push(`/loja${queryString ? `?${queryString}` : ''}`);
       return;
     }
     
-    // Navega para a categoria/subcategoria
     const url = subcategoryId 
       ? `/categoria/${categoryId}/${subcategoryId}${queryString ? `?${queryString}` : ''}`
       : `/categoria/${categoryId}${queryString ? `?${queryString}` : ''}`;
@@ -102,17 +96,13 @@ export function StoreFilters({
     router.push(url);
   };
 
-  // ✅ ATUALIZA QUERY PARAMS (SORT E SIZE) COM TOGGLE
   const updateQueryParam = (key: string, value: string) => {
     const params = new URLSearchParams(window.location.search);
-    
-    // Se já está selecionado, remove (TOGGLE)
     if (params.get(key) === value) {
       params.delete(key);
     } else {
       params.set(key, value);
     }
-    
     const queryString = params.toString();
     router.push(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
   };
@@ -143,7 +133,6 @@ export function StoreFilters({
         )}
       </div>
 
-      {/* Categorias e Subcategorias */}
       <div className="border-b border-white/10 pb-6">
         <button 
           onClick={() => toggleSection("categories")}
@@ -161,7 +150,6 @@ export function StoreFilters({
               
               return (
                 <div key={cat.id} className="flex flex-col">
-                  {/* Categoria Pai */}
                   <button
                     onClick={() => navigateToCategory(cat.id)}
                     className={cn(
@@ -180,12 +168,10 @@ export function StoreFilters({
                     </div>
                   </button>
 
-                  {/* Renderização das Subcategorias */}
                   {isActive && cat.subcategories && (
                     <div className="ml-2 pl-4 border-l border-white/10 mt-1 space-y-1">
                       {cat.subcategories.map((sub) => {
                         const isSubSelected = currentSubcategory === sub.id;
-                        
                         return (
                           <button
                             key={sub.id}
@@ -209,7 +195,6 @@ export function StoreFilters({
         )}
       </div>
 
-      {/* Ordenação por Preço */}
       <div className="border-b border-white/10 pb-6">
         <button 
           onClick={() => toggleSection("price")} 
@@ -246,7 +231,6 @@ export function StoreFilters({
         )}
       </div>
 
-      {/* Filtro de Tamanhos */}
       <div className="border-b border-white/10 pb-6">
         <button 
           onClick={() => toggleSection("sizes")} 
@@ -257,20 +241,24 @@ export function StoreFilters({
         </button>
         {openSections.sizes && (
           <div className="mt-4 grid grid-cols-4 gap-2">
-            {sizes.map((size) => (
-              <button
-                key={size}
-                onClick={() => updateQueryParam("size", size)}
-                className={cn(
-                  "h-10 w-full rounded-md border text-sm font-medium transition-all",
-                  currentSize === size 
-                    ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
-                    : "border-white/10 text-muted-foreground hover:border-blue-500 hover:text-white"
-                )}
-              >
-                {size}
-              </button>
-            ))}
+            {SORTED_SIZES.map((size) => {
+              const isSelected = currentSize === size;
+
+              return (
+                <button
+                  key={size}
+                  onClick={() => updateQueryParam("size", size)}
+                  className={cn(
+                    "h-10 w-full rounded-md border text-sm font-medium transition-all relative overflow-hidden",
+                    isSelected 
+                      ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
+                      : "border-white/10 text-muted-foreground hover:border-blue-500 hover:text-white"
+                  )}
+                >
+                  {size}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

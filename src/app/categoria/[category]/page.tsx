@@ -17,7 +17,6 @@ type Props = {
 
 const ITEMS_PER_PAGE = 12;
 
-// Mapeamento de slugs para nomes reais da API
 const categoryMap: Record<string, string> = {
   "animes": "Animes",
   "tokusatsu": "Tokusatsu",
@@ -44,7 +43,6 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const { category } = await params;
   const search = await searchParams;
 
-  // Verifica se a categoria existe
   if (!categoryMap[category]) {
     notFound();
   }
@@ -56,7 +54,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const allProducts = await nuvemshopClient.getProducts();
   const categoryName = categoryMap[category];
 
-  let products = allProducts.filter((p) => {
+  const categoryProducts = allProducts.filter((p) => {
     const target = categoryName.toLowerCase();
     const mainMatch = (p.category || "").toLowerCase() === target;
     const subMatch = p.categories?.some(cat => 
@@ -65,7 +63,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     return mainMatch || subMatch;
   });
 
-  // Filtro por tamanho
+  let products = [...categoryProducts];
+
   if (sizeFilter) {
     products = products.filter((p) => {
       return p.variants?.some(variant => 
@@ -74,14 +73,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     });
   }
 
-  // Ordenação por Preço
   if (sortFilter === 'price_asc') {
     products.sort((a, b) => a.price - b.price);
   } else if (sortFilter === 'price_desc') {
     products.sort((a, b) => b.price - a.price);
   }
 
-  // Paginação
   const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
   const paginatedProducts = products.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -98,7 +95,6 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         />
         
         <div className="flex flex-col lg:flex-row gap-12">
-          {/* Sidebar Desktop */}
           <div className="hidden lg:block">
             <StoreFilters 
               currentCategory={category}
@@ -118,11 +114,10 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                     {categoryName}
                   </h1>
                   <p className="text-muted-foreground mt-2">
-                    {products.length} {products.length === 1 ? 'drop encontrado' : 'drops encontrados'}
+                    {products.length} {products.length === 1 ? 'modelo encontrado' : 'modelos encontrados'}
                   </p>
                 </div>
 
-                {/* Filtro Mobile */}
                 <div className="lg:hidden w-full md:w-auto mt-4 md:mt-0">
                   <Sheet>
                     <SheetTrigger asChild>
@@ -144,7 +139,6 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               </div>
             </BlurFade>
 
-            {/* Grid de Produtos */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {paginatedProducts.length > 0 ? (
                 paginatedProducts.map((product, idx) => (
@@ -155,13 +149,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               ) : (
                 <div className="col-span-full py-20 text-center flex flex-col items-center gap-4 border border-dashed border-white/10 rounded-3xl bg-white/5">
                   <p className="text-xl text-muted-foreground font-display">
-                    Nenhum drop encontrado.
+                    Nenhum modelo encontrado.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Paginação */}
             {totalPages > 1 && (
               <PaginationWrapper 
                 currentPage={currentPage}
