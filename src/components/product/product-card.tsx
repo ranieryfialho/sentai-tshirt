@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Product } from "@/types";
 import { QuickAddButton } from "@/components/product/quick-add-btn";
+import { FavoriteButton } from "@/components/product/favorite-button"; // ⭐ IMPORT
 
 interface ProductCardProps {
   product: Product;
@@ -46,6 +47,12 @@ export function ProductCard({ product, index }: ProductCardProps) {
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20" />
           
+          {/* ⭐ BOTÃO DE FAVORITO - CANTO SUPERIOR ESQUERDO */}
+          <div className="absolute top-3 left-3 z-30" onClick={(e) => e.preventDefault()}>
+            <FavoriteButton product={product} />
+          </div>
+
+          {/* BADGE DE DESCONTO - CANTO SUPERIOR DIREITO */}
           {product.promotional_price && (
             <span className="absolute top-3 right-3 z-30 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
               -{discountPercentage}%

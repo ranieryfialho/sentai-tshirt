@@ -1,26 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { Search, ShoppingBag, Menu, User } from "lucide-react";
+import { Search, ShoppingBag, Menu, User, Heart } from "lucide-react";
 import { AnimatedThemeToggle } from "@/components/magicui/animated-theme-toggle"; 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { useCartStore } from "@/lib/store/cart-store"; 
+import { useCartStore } from "@/lib/store/cart-store";
+import { useFavoritesStore } from "@/lib/store/favorites-store"; // ⭐ NOVO
 import { useEffect, useState } from "react";
 
 export function Header() {
   const [mounted, setMounted] = useState(false);
   const { getCartCount, toggleCart } = useCartStore();
+  const { getFavoritesCount, toggleSheet } = useFavoritesStore(); // ⭐ NOVO
   const cartCount = getCartCount();
+  const favoritesCount = getFavoritesCount(); // ⭐ NOVO
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // ✅ ATUALIZADO: "/categoria/camisetas" -> "/loja"
   const navLinks = [
     { name: "Sentai Store", href: "/loja" },
     { name: "Pedidos Personalizados", href: "/personalizados" },
@@ -60,24 +62,23 @@ export function Header() {
             </SheetContent>
           </Sheet>
 
-          {/* Logo (Home) */}
           <Link href="/" className="flex items-center gap-2 group">
             <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
               <span className="font-display font-bold text-xl">S</span>
             </div>
             <span className="hidden md:inline-block font-display font-bold text-xl tracking-tight text-foreground group-hover:text-primary transition-colors">
-              Sentai<span className="text-primary">Tshirt</span>
+              Sentai Tshirt
             </span>
           </Link>
         </div>
 
-        {/* Centro: Menu Desktop */}
-        <nav className="hidden md:flex items-center gap-6">
+        {/* Centro: Links Desktop */}
+        <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
-            <Link 
+            <Link
               key={link.href}
-              href={link.href} 
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors whitespace-nowrap"
+              href={link.href}
+              className="px-3 py-2 text-sm font-medium text-foreground/80 hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
             >
               {link.name}
             </Link>
@@ -85,39 +86,32 @@ export function Header() {
         </nav>
 
         {/* Lado Direito: Ações */}
-        <div className="flex items-center gap-2 md:gap-4 flex-1 md:flex-none justify-end">
-          <div className="relative hidden lg:block w-full max-w-[200px] xl:max-w-[240px]">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Buscar..."
-              className="w-full bg-secondary/10 border-transparent pl-9 focus-visible:bg-background focus-visible:ring-primary/50 transition-all duration-300 rounded-full h-9 placeholder:text-muted-foreground/50"
-            />
-          </div>
+        <div className="flex items-center gap-2">
+          <AnimatedThemeToggle />
 
-          <Button variant="ghost" size="icon" className="lg:hidden text-foreground/80">
-            <Search className="h-5 w-5" />
+          {/* ⭐ BOTÃO DE FAVORITOS - ABRE O SHEET */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleSheet}
+            className="relative text-foreground/80 hover:text-red-500 hover:bg-red-500/10"
+          >
+            <Heart className="h-5 w-5" />
+            {mounted && favoritesCount > 0 && (
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs font-bold">
+                {favoritesCount}
+              </Badge>
+            )}
           </Button>
 
-          <div className="relative">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={toggleCart} 
-              className="text-foreground/80 hover:text-primary hover:bg-primary/10"
-            >
-              <ShoppingBag className="h-5 w-5" />
-              <span className="sr-only">Carrinho</span>
-            </Button>
-            
+          <Button variant="ghost" size="icon" onClick={toggleCart} className="relative text-foreground/80 hover:text-primary hover:bg-primary/10">
+            <ShoppingBag className="h-5 w-5" />
             {mounted && cartCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-secondary text-white text-[10px] animate-bounce-slow shadow-lg shadow-red-500/50 pointer-events-none">
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-primary text-white text-xs font-bold">
                 {cartCount}
               </Badge>
             )}
-          </div>
-
-          <AnimatedThemeToggle />
+          </Button>
         </div>
       </div>
     </header>

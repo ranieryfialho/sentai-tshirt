@@ -9,6 +9,7 @@ import { Meteors } from "@/components/magicui/meteors";
 import { SmoothCursor } from "@/components/magicui/smooth-cursor";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { CartSheet } from "@/components/cart/cart-sheet";
+import { FavoritesSheet } from "@/components/favorites/favorites-sheet"; // ⭐ NOVO
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" });
@@ -40,31 +41,23 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {/* ✅ BACKGROUND FIXO - SEM OVERFLOW HIDDEN! */}
+          {/* BACKGROUND FIXO */}
           <div className="fixed inset-0 z-0 pointer-events-none">
-            {/* Fundo base */}
             <div className="absolute inset-0 bg-white dark:bg-background transition-colors duration-500" />
-            
-            {/* Gradiente radial (apenas dark mode) */}
             <div className="absolute inset-0 opacity-0 dark:opacity-100 transition-opacity duration-500 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-background to-black" />
-            
-            {/* ✅ METEOROS AQUI - SEM OVERFLOW HIDDEN */}
             <Meteors number={40} />
-            
-            {/* Orbs de luz */}
             <div className="absolute inset-0 overflow-hidden opacity-0 dark:opacity-30 transition-opacity duration-500">
               <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/30 rounded-full blur-[120px] animate-pulse" />
               <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/30 rounded-full blur-[120px] animate-pulse delay-1000" />
             </div>
-            
-            {/* Textura de ruído */}
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 dark:opacity-20 brightness-100 contrast-150 mix-blend-overlay" />
           </div>
 
           <SmoothCursor />
           <CartSheet />
+          <FavoritesSheet /> {/* ⭐ NOVO */}
 
-          {/* ✅ CONTEÚDO NA FRENTE */}
+          {/* CONTEÚDO NA FRENTE */}
           <div className="relative z-10">
             <SmoothScroll>
               <Header />
