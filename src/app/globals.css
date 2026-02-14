@@ -129,3 +129,94 @@ select,
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--primary));
 }
+
+/* ============================================
+   ESTILOS DA DESCRIÇÃO DO PRODUTO
+   ============================================ */
+
+/* Parágrafos */
+.product-description p {
+  @apply mb-4 text-foreground leading-relaxed;
+}
+
+/* Negrito */
+.product-description strong,
+.product-description b {
+  @apply font-bold text-foreground;
+}
+
+/* Itálico */
+.product-description em,
+.product-description i {
+  @apply italic;
+}
+
+/* Listas não ordenadas (bullet points) */
+.product-description ul {
+  @apply ml-5 mb-4 space-y-2 list-disc;
+}
+
+/* Listas ordenadas (números) */
+.product-description ol {
+  @apply ml-5 mb-4 space-y-2 list-decimal;
+}
+
+/* Items de lista */
+.product-description li {
+  @apply text-foreground leading-relaxed;
+}
+
+/* Negrito dentro de listas */
+.product-description li strong,
+.product-description li b {
+  @apply font-bold text-foreground;
+}
+
+/* Spans (caso existam) */
+.product-description span {
+  @apply text-foreground;
+}
+
+/* Links (se houver) */
+.product-description a {
+  @apply text-primary underline hover:text-primary/80 transition-colors;
+}
+
+/* Quebra de linha */
+.product-description br {
+  @apply block mb-2;
+}
+
+/* Remove margin do último elemento para evitar espaço extra */
+.product-description > *:last-child {
+  @apply mb-0;
+}
+
+/* Remove margin do primeiro elemento */
+.product-description > *:first-child {
+  @apply mt-0;
+}
+
+/* Estilo para títulos caso apareçam na descrição */
+.product-description h1,
+.product-description h2,
+.product-description h3,
+.product-description h4 {
+  @apply font-bold text-foreground mb-3 mt-4;
+}
+
+.product-description h1 {
+  @apply text-xl;
+}
+
+.product-description h2 {
+  @apply text-lg;
+}
+
+.product-description h3 {
+  @apply text-base;
+}
+
+.product-description h4 {
+  @apply text-sm;
+}

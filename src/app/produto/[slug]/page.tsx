@@ -47,7 +47,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
             href="/loja" 
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-8 group"
           >
-            {/* CORREÇÃO DO BOTÃO VOLTAR PARA LIGHT/DARK MODE */}
             <div className="p-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 group-hover:bg-primary/20 dark:group-hover:bg-primary/20 transition-all">
               <ArrowLeft className="w-4 h-4" />
             </div>
@@ -57,12 +56,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           
-          <BlurFade delay={0.2} inView>
-            <ProductGallery 
-              images={product.images} 
-              discountPercentage={discountPercentage} 
-            />
-          </BlurFade>
+          <div className="lg:sticky lg:top-24 lg:self-start">
+            <BlurFade delay={0.2} inView>
+              <ProductGallery 
+                images={product.images} 
+                discountPercentage={discountPercentage} 
+              />
+            </BlurFade>
+          </div>
 
           <BlurFade delay={0.3} inView>
             <ProductInfo product={product} />
@@ -70,7 +71,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
         </div>
         
-        {/* CORREÇÃO DAS BORDAS DA SEÇÃO DE ESPECIFICAÇÕES */}
         <div className="mt-20 border-t border-black/10 dark:border-white/10 pt-10">
           <BlurFade inView>
             <h2 className="text-2xl font-bold mb-6 font-display">Especificações Técnicas</h2>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Product } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -13,6 +13,36 @@ import { FavoriteButton } from "@/components/product/favorite-button";
 
 interface ProductInfoProps {
   product: Product;
+}
+
+function sanitizeDescription(html: string): string {
+  if (!html) return "";
+  
+  let clean = html;
+  
+  clean = clean.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+  
+  clean = clean.replace(/\s+style="[^"]*"/gi, '');
+  clean = clean.replace(/\s+style='[^']*'/gi, '');
+
+  clean = clean.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+
+  clean = clean.replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '');
+
+  clean = clean.replace(/\s+on\w+="[^"]*"/gi, '');
+  clean = clean.replace(/\s+on\w+='[^']*'/gi, '');
+  
+  clean = clean.replace(/\s+class=""/gi, '');
+  clean = clean.replace(/\s+class=''/gi, '');
+  
+  clean = clean.replace(/\s+id="[^"]*"/gi, '');
+  clean = clean.replace(/\s+id='[^']*'/gi, '');
+  
+  clean = clean.replace(/>\s+</g, '><');
+  
+  clean = clean.replace(/\n\s*\n/g, '\n');
+  
+  return clean.trim();
 }
 
 export function ProductInfo({ product }: ProductInfoProps) {
@@ -49,7 +79,12 @@ export function ProductInfo({ product }: ProductInfoProps) {
   };
 
   const currentPrice = selectedVariant?.price || product.price;
-  const currentPromo = product.promotional_price; 
+  const currentPromo = product.promotional_price;
+  
+  const cleanDescription = useMemo(
+    () => sanitizeDescription(product.description || ""),
+    [product.description]
+  );
 
   return (
     <div className="flex flex-col space-y-6">
@@ -86,6 +121,17 @@ export function ProductInfo({ product }: ProductInfoProps) {
         </p>
       </div>
 
+      {cleanDescription && (
+        <div className="bg-white/50 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-6 backdrop-blur-sm">
+          <div 
+            className="product-description text-foreground leading-relaxed text-sm"
+            dangerouslySetInnerHTML={{ __html: cleanDescription }}
+          />
+        </div>
+      )}
+
+      <Separator className="bg-black/10 dark:bg-white/10" />
+
       <div className="space-y-3">
         <label className="text-sm font-bold text-foreground/80">Tamanho:</label>
         <div className="flex flex-wrap gap-3">
@@ -108,10 +154,10 @@ export function ProductInfo({ product }: ProductInfoProps) {
                 >
                   {size}
                 </button>
-              )
+              );
             })
           ) : (
-             <p className="text-sm text-muted-foreground">Tamanho único.</p>
+            <p className="text-sm text-muted-foreground">Tamanho único.</p>
           )}
         </div>
       </div>
@@ -155,10 +201,6 @@ export function ProductInfo({ product }: ProductInfoProps) {
             <p className="text-muted-foreground">30 dias para troca</p>
           </div>
         </div>
-      </div>
-      
-      <div className="bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 rounded-xl p-4 backdrop-blur-sm text-muted-foreground leading-relaxed text-sm">
-         <p>{product.description || "Sem descrição disponível."}</p>
       </div>
     </div>
   );
