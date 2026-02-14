@@ -68,7 +68,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
         </div>
       </div>
 
-      <Separator className="bg-white/10" />
+      <Separator className="bg-black/10 dark:bg-white/10" />
 
       <div className="space-y-1">
         {currentPromo && (
@@ -102,8 +102,8 @@ export function ProductInfo({ product }: ProductInfoProps) {
                     selectedSize === size
                       ? "bg-primary text-white border-primary ring-4 ring-primary/20"
                       : variantExists
-                        ? "border-white/10 text-muted-foreground hover:border-primary/50 hover:text-primary bg-white/5"
-                        : "border-white/5 text-white/10 cursor-not-allowed bg-black/20"
+                        ? "border-black/10 dark:border-white/10 text-muted-foreground hover:border-primary/50 hover:text-primary bg-black/5 dark:bg-white/5"
+                        : "border-black/5 dark:border-white/5 text-black/20 dark:text-white/10 cursor-not-allowed bg-black/5 dark:bg-black/20"
                   )}
                 >
                   {size}
@@ -134,21 +134,21 @@ export function ProductInfo({ product }: ProductInfoProps) {
         <div className="h-14 w-14 flex-shrink-0">
           <FavoriteButton 
             product={product}
-            className="w-full h-full rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-red-500/50 hover:bg-red-500/10 transition-all data-[favorited=true]:bg-red-500/20 data-[favorited=true]:border-red-500"
+            className="w-full h-full rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 hover:border-red-500/50 hover:bg-red-500/10 transition-all data-[favorited=true]:bg-red-500/20 data-[favorited=true]:border-red-500"
             iconSize={24}
           />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 pt-4">
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5">
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
           <Clock className="w-5 h-5 text-primary" />
           <div className="text-xs">
             <p className="font-bold text-foreground">Sob Encomenda</p>
             <p className="text-muted-foreground">Envio em até 5 dias úteis</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5">
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
           <ShieldCheck className="w-5 h-5 text-primary" />
           <div className="text-xs">
             <p className="font-bold text-foreground">Garantia Sentai</p>
@@ -157,7 +157,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
         </div>
       </div>
       
-      <div className="bg-white/5 border border-white/5 rounded-xl p-4 backdrop-blur-sm text-muted-foreground leading-relaxed text-sm">
+      <div className="bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 rounded-xl p-4 backdrop-blur-sm text-muted-foreground leading-relaxed text-sm">
          <p>{product.description || "Sem descrição disponível."}</p>
       </div>
     </div>

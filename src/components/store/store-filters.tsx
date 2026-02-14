@@ -47,7 +47,7 @@ const categories = [
   },
 ];
 
-const SORTED_SIZES = ["P", "M", "G", "GG", "XG", "XXG"];
+const SORTED_SIZES = ["2", "4", "6", "8", "10", "PP", "P", "M", "G", "GG", "XG", "XXG"];
 
 type StoreFiltersProps = {
   currentCategory?: string;
@@ -68,7 +68,7 @@ export function StoreFilters({
   const [openSections, setOpenSections] = useState({
     categories: true,
     price: false,
-    sizes: true,
+    sizes: false,
   });
 
   const toggleSection = (section: keyof typeof openSections) => {
@@ -120,147 +120,161 @@ export function StoreFilters({
   const hasActiveFilters = currentCategory || currentSize || currentSort;
 
   return (
-    <aside className="w-full md:w-64 flex-shrink-0 space-y-8 text-foreground sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto pb-10 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-      <div className="flex items-center justify-between">
-        <h3 className="font-display text-xl font-bold">Filtros</h3>
-        {hasActiveFilters && (
-          <button 
-            onClick={clearAllFilters}
-            className="text-xs text-red-400 hover:underline"
-          >
-            Limpar tudo
-          </button>
+    <aside className="w-full md:w-64 flex-shrink-0 sticky top-28 self-start h-[calc(100vh-7rem)] z-10 text-foreground">
+      
+      {/* AQUI ESTÁ A CLASSE "custom-scrollbar" QUE CRIAMOS NO globals.css. 
+        Ela aplica o design fino, neutro e com hover azul sem precisar de plugins. 
+      */}
+      <div 
+        className={cn(
+          "h-full w-full overflow-y-auto overflow-x-hidden pr-4 lg:pr-6 pb-20 space-y-8 overscroll-contain custom-scrollbar"
         )}
-      </div>
+        data-lenis-prevent="true"
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="font-display text-xl font-bold">Filtros</h3>
+          {hasActiveFilters && (
+            <button 
+              onClick={clearAllFilters}
+              className="text-xs text-red-400 hover:underline"
+            >
+              Limpar tudo
+            </button>
+          )}
+        </div>
 
-      <div className="border-b border-white/10 pb-6">
-        <button 
-          onClick={() => toggleSection("categories")}
-          className="flex w-full items-center justify-between py-2 font-bold hover:text-primary transition-colors"
-        >
-          <span>Categorias</span>
-          {openSections.categories ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-        
-        {openSections.categories && (
-          <div className="mt-4 space-y-1">
-            {categories.map((cat) => {
-              const isActive = isCategoryActive(cat.id, cat.subcategories);
-              const isCatSelected = currentCategory === cat.id && !currentSubcategory;
-              
-              return (
-                <div key={cat.id} className="flex flex-col">
+        <div className="border-b border-black/10 dark:border-white/10 pb-6">
+          <button 
+            onClick={() => toggleSection("categories")}
+            className="flex w-full items-center justify-between py-2 font-bold hover:text-primary transition-colors"
+          >
+            <span>Categorias</span>
+            {openSections.categories ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+          
+          {openSections.categories && (
+            <div className="mt-4 space-y-1">
+              {categories.map((cat) => {
+                const isActive = isCategoryActive(cat.id, cat.subcategories);
+                const isCatSelected = currentCategory === cat.id && !currentSubcategory;
+                
+                return (
+                  <div key={cat.id} className="flex flex-col">
+                    <button
+                      onClick={() => navigateToCategory(cat.id)}
+                      className={cn(
+                        "flex items-center justify-between w-full py-1.5 text-sm hover:text-primary transition-colors",
+                        isCatSelected ? "text-primary font-bold" : "text-muted-foreground"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={cn(
+                          "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                          isCatSelected 
+                            ? "bg-primary border-primary" 
+                            : "border-black/20 dark:border-white/20 bg-transparent"
+                        )}>
+                          {isCatSelected && <Check size={10} className="text-white" />}
+                        </div>
+                        {cat.label}
+                      </div>
+                    </button>
+
+                    {isActive && cat.subcategories && (
+                      <div className="ml-2 pl-4 border-l border-black/10 dark:border-white/10 mt-1 space-y-1">
+                        {cat.subcategories.map((sub) => {
+                          const isSubSelected = currentSubcategory === sub.id;
+                          return (
+                            <button
+                              key={sub.id}
+                              onClick={() => navigateToCategory(cat.id, sub.id)}
+                              className={cn(
+                                "flex items-center gap-2 w-full py-1 text-xs hover:text-primary transition-colors text-left",
+                                isSubSelected ? "text-primary font-bold" : "text-muted-foreground/70"
+                              )}
+                            >
+                              <ChevronRight size={12} className={cn(isSubSelected ? "text-primary" : "text-transparent")} />
+                              {sub.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="border-b border-black/10 dark:border-white/10 pb-6">
+          <button 
+            onClick={() => toggleSection("price")} 
+            className="flex w-full items-center justify-between py-2 font-bold hover:text-primary transition-colors"
+          >
+            <span>Faixa de Preço</span>
+            {openSections.price ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+          {openSections.price && (
+            <div className="mt-4 grid grid-cols-2 gap-2">
+               <button
+                onClick={() => updateQueryParam("sort", "price_asc")}
+                className={cn(
+                  "h-9 px-3 rounded-md border text-xs font-medium transition-all",
+                  currentSort === "price_asc" 
+                    ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
+                    : "border-black/10 dark:border-white/10 text-muted-foreground hover:border-blue-600 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-white"
+                )}
+               >
+                 Menor Preço
+               </button>
+               <button
+                onClick={() => updateQueryParam("sort", "price_desc")}
+                className={cn(
+                  "h-9 px-3 rounded-md border text-xs font-medium transition-all",
+                  currentSort === "price_desc" 
+                    ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
+                    : "border-black/10 dark:border-white/10 text-muted-foreground hover:border-blue-600 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-white"
+                )}
+               >
+                 Maior Preço
+               </button>
+            </div>
+          )}
+        </div>
+
+        <div className="border-b border-black/10 dark:border-white/10 pb-6">
+          <button 
+            onClick={() => toggleSection("sizes")} 
+            className="flex w-full items-center justify-between py-2 font-bold hover:text-primary transition-colors"
+          >
+            <span>Tamanhos</span>
+            {openSections.sizes ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+          {openSections.sizes && (
+            <div className="mt-4 grid grid-cols-4 gap-2">
+              {SORTED_SIZES.map((size) => {
+                const isSelected = currentSize === size;
+
+                return (
                   <button
-                    onClick={() => navigateToCategory(cat.id)}
+                    key={size}
+                    onClick={() => updateQueryParam("size", size)}
                     className={cn(
-                      "flex items-center justify-between w-full py-1.5 text-sm hover:text-primary transition-colors",
-                      isCatSelected ? "text-primary font-bold" : "text-muted-foreground"
+                      "h-10 w-full rounded-md border text-sm font-medium transition-all relative overflow-hidden",
+                      isSelected 
+                        ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
+                        : "border-black/10 dark:border-white/10 text-muted-foreground hover:border-blue-600 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-white"
                     )}
                   >
-                    <div className="flex items-center gap-2">
-                      <div className={cn(
-                        "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                        isCatSelected ? "bg-primary border-primary" : "border-white/20 bg-transparent"
-                      )}>
-                        {isCatSelected && <Check size={10} className="text-white" />}
-                      </div>
-                      {cat.label}
-                    </div>
+                    {size}
                   </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-                  {isActive && cat.subcategories && (
-                    <div className="ml-2 pl-4 border-l border-white/10 mt-1 space-y-1">
-                      {cat.subcategories.map((sub) => {
-                        const isSubSelected = currentSubcategory === sub.id;
-                        return (
-                          <button
-                            key={sub.id}
-                            onClick={() => navigateToCategory(cat.id, sub.id)}
-                            className={cn(
-                              "flex items-center gap-2 w-full py-1 text-xs hover:text-primary transition-colors text-left",
-                              isSubSelected ? "text-primary font-bold" : "text-muted-foreground/70"
-                            )}
-                          >
-                            <ChevronRight size={12} className={cn(isSubSelected ? "text-primary" : "text-transparent")} />
-                            {sub.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div className="border-b border-white/10 pb-6">
-        <button 
-          onClick={() => toggleSection("price")} 
-          className="flex w-full items-center justify-between py-2 font-bold hover:text-primary transition-colors"
-        >
-          <span>Faixa de Preço</span>
-          {openSections.price ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-        {openSections.price && (
-          <div className="mt-4 grid grid-cols-2 gap-2">
-             <button
-              onClick={() => updateQueryParam("sort", "price_asc")}
-              className={cn(
-                "h-9 px-3 rounded-md border text-xs font-medium transition-all",
-                currentSort === "price_asc" 
-                  ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
-                  : "border-white/10 text-muted-foreground hover:border-blue-500 hover:text-white"
-              )}
-             >
-               Menor Preço
-             </button>
-             <button
-              onClick={() => updateQueryParam("sort", "price_desc")}
-              className={cn(
-                "h-9 px-3 rounded-md border text-xs font-medium transition-all",
-                currentSort === "price_desc" 
-                  ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
-                  : "border-white/10 text-muted-foreground hover:border-blue-500 hover:text-white"
-              )}
-             >
-               Maior Preço
-             </button>
-          </div>
-        )}
-      </div>
-
-      <div className="border-b border-white/10 pb-6">
-        <button 
-          onClick={() => toggleSection("sizes")} 
-          className="flex w-full items-center justify-between py-2 font-bold hover:text-primary transition-colors"
-        >
-          <span>Tamanhos</span>
-          {openSections.sizes ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-        {openSections.sizes && (
-          <div className="mt-4 grid grid-cols-4 gap-2">
-            {SORTED_SIZES.map((size) => {
-              const isSelected = currentSize === size;
-
-              return (
-                <button
-                  key={size}
-                  onClick={() => updateQueryParam("size", size)}
-                  className={cn(
-                    "h-10 w-full rounded-md border text-sm font-medium transition-all relative overflow-hidden",
-                    isSelected 
-                      ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
-                      : "border-white/10 text-muted-foreground hover:border-blue-500 hover:text-white"
-                  )}
-                >
-                  {size}
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
     </aside>
   );

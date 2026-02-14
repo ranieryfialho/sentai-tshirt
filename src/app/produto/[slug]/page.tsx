@@ -47,7 +47,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
             href="/loja" 
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-8 group"
           >
-            <div className="p-2 rounded-full bg-white/5 border border-white/10 group-hover:bg-primary/20 transition-all">
+            {/* CORREÇÃO DO BOTÃO VOLTAR PARA LIGHT/DARK MODE */}
+            <div className="p-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 group-hover:bg-primary/20 dark:group-hover:bg-primary/20 transition-all">
               <ArrowLeft className="w-4 h-4" />
             </div>
             <span className="text-sm font-medium">Voltar para a Loja</span>
@@ -69,23 +70,24 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
         </div>
         
-        <div className="mt-20 border-t border-white/10 pt-10">
+        {/* CORREÇÃO DAS BORDAS DA SEÇÃO DE ESPECIFICAÇÕES */}
+        <div className="mt-20 border-t border-black/10 dark:border-white/10 pt-10">
           <BlurFade inView>
             <h2 className="text-2xl font-bold mb-6 font-display">Especificações Técnicas</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 text-sm">
-                <div className="flex justify-between py-3 border-b border-white/5">
+                <div className="flex justify-between py-3 border-b border-black/5 dark:border-white/5">
                     <span className="text-muted-foreground">Material</span>
                     <span className="font-medium">100% Algodão Penteado 30.1</span>
                 </div>
-                <div className="flex justify-between py-3 border-b border-white/5">
+                <div className="flex justify-between py-3 border-b border-black/5 dark:border-white/5">
                     <span className="text-muted-foreground">Estampa</span>
                     <span className="font-medium">Silk Screen Digital (DTG)</span>
                 </div>
-                <div className="flex justify-between py-3 border-b border-white/5">
+                <div className="flex justify-between py-3 border-b border-black/5 dark:border-white/5">
                     <span className="text-muted-foreground">Modelagem</span>
                     <span className="font-medium">Regular Fit</span>
                 </div>
-                <div className="flex justify-between py-3 border-b border-white/5">
+                <div className="flex justify-between py-3 border-b border-black/5 dark:border-white/5">
                     <span className="text-muted-foreground">Garantia</span>
                     <span className="font-medium">Contra defeitos de fabricação</span>
                 </div>

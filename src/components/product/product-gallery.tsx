@@ -17,7 +17,8 @@ export function ProductGallery({ images, discountPercentage }: ProductGalleryPro
 
   return (
     <div className="space-y-4">
-      <div className="aspect-square relative rounded-3xl overflow-hidden border border-white/10 bg-white/5 shadow-2xl shadow-black/20 group">
+      {/* Imagem Principal: bg e border dinâmicos */}
+      <div className="aspect-square relative rounded-3xl overflow-hidden border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 shadow-2xl shadow-black/20 group">
         <AnimatePresence mode="wait">
           <motion.img 
             key={selectedIndex}
@@ -32,12 +33,13 @@ export function ProductGallery({ images, discountPercentage }: ProductGalleryPro
         </AnimatePresence>
         
         {discountPercentage > 0 && (
-          <div className="absolute top-6 right-6 bg-secondary text-white font-bold px-4 py-2 rounded-full shadow-lg border border-white/10 backdrop-blur-md z-10">
+          <div className="absolute top-6 right-6 bg-secondary text-white font-bold px-4 py-2 rounded-full shadow-lg border border-white/20 backdrop-blur-md z-10">
             -{discountPercentage}% OFF
           </div>
         )}
       </div>
       
+      {/* Miniaturas: bg e border dinâmicos */}
       {images.length > 1 && (
         <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
           {images.map((img, idx) => (
@@ -45,16 +47,13 @@ export function ProductGallery({ images, discountPercentage }: ProductGalleryPro
               key={img.id}
               onClick={() => setSelectedIndex(idx)}
               className={cn(
-                "flex-shrink-0 w-24 h-24 rounded-xl border overflow-hidden transition-all bg-white/5 relative",
+                "flex-shrink-0 w-24 h-24 rounded-xl border overflow-hidden transition-all bg-black/5 dark:bg-white/5 relative",
                 selectedIndex === idx 
                   ? "border-primary ring-2 ring-primary/20" 
-                  : "border-white/10 hover:border-white/30"
+                  : "border-black/10 dark:border-white/10 hover:border-black/30 dark:hover:border-white/30"
               )}
             >
               <img src={img.src} alt="" className="w-full h-full object-cover" />
-              {selectedIndex === idx && (
-                <div className="absolute inset-0 bg-primary/10" />
-              )}
             </button>
           ))}
         </div>

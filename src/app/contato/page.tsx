@@ -23,7 +23,7 @@ export default function ContactPage() {
           
           <BlurFade delay={0.2} inView>
             <div className="space-y-8">
-              <div className="flex gap-4 items-start p-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+              <div className="flex gap-4 items-start p-6 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
                 <div className="p-3 bg-primary/20 rounded-lg text-primary">
                   <Mail className="w-6 h-6" />
                 </div>
@@ -34,7 +34,7 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="flex gap-4 items-start p-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+              <div className="flex gap-4 items-start p-6 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
                 <div className="p-3 bg-green-500/20 rounded-lg text-green-500">
                   <Phone className="w-6 h-6" />
                 </div>
@@ -45,7 +45,7 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="flex gap-4 items-start p-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+              <div className="flex gap-4 items-start p-6 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
                 <div className="p-3 bg-purple-500/20 rounded-lg text-purple-500">
                   <MapPin className="w-6 h-6" />
                 </div>
@@ -61,7 +61,7 @@ export default function ContactPage() {
           </BlurFade>
 
           <BlurFade delay={0.3} inView>
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
+            <div className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-3xl p-8 backdrop-blur-md">
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
                 <Send className="w-5 h-5 text-primary" />
                 Envie uma mensagem
@@ -71,28 +71,28 @@ export default function ContactPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium ml-1">Nome</label>
-                    <Input placeholder="Seu nome" className="bg-black/20 border-white/10" />
+                    <Input placeholder="Seu nome" className="bg-black/5 dark:bg-black/20 border-black/10 dark:border-white/10 focus-visible:ring-primary" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium ml-1">Sobrenome</label>
-                    <Input placeholder="Sobrenome" className="bg-black/20 border-white/10" />
+                    <Input placeholder="Sobrenome" className="bg-black/5 dark:bg-black/20 border-black/10 dark:border-white/10 focus-visible:ring-primary" />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
                   <label className="text-sm font-medium ml-1">E-mail</label>
-                  <Input type="email" placeholder="seu@email.com" className="bg-black/20 border-white/10" />
+                  <Input type="email" placeholder="seu@email.com" className="bg-black/5 dark:bg-black/20 border-black/10 dark:border-white/10 focus-visible:ring-primary" />
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium ml-1">Mensagem</label>
                   <textarea 
-                    className="flex min-h-[120px] w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex min-h-[120px] w-full rounded-md border border-black/10 dark:border-white/10 bg-black/5 dark:bg-black/20 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
                     placeholder="Como podemos ajudar?"
                   />
                 </div>
 
-                <Button className="w-full bg-primary hover:bg-primary/90 font-bold h-12 mt-2">
+                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-12 mt-2">
                   ENVIAR MENSAGEM
                 </Button>
               </form>
