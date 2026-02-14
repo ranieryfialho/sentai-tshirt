@@ -48,7 +48,7 @@ export function HeroCarousel() {
   }, [current]);
 
   return (
-    <div className="relative w-full h-[85vh] md:h-[90vh] overflow-hidden border-b border-white/10 group bg-black">
+    <div className="absolute inset-0 w-full h-full overflow-hidden border-b border-white/10 group bg-black">
       <AnimatePresence mode="wait">
         <motion.div
           key={current}
@@ -96,7 +96,7 @@ export function HeroCarousel() {
         <ChevronRight className="w-8 h-8" />
       </button>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex gap-3">
         {slides.map((_, idx) => (
           <button
             key={idx}
