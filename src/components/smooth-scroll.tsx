@@ -14,6 +14,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
         touchMultiplier: 2,
       }}
     >
+      {/* @ts-expect-error: Conflito de tipagem entre React 19 e a biblioteca lenis legada */}
       {children}
     </ReactLenis>
   );
