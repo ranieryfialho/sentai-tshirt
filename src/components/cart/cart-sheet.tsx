@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useCartStore } from "@/lib/store/cart-store";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area"; 
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, PackageOpen } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, PackageOpen, Loader2, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function CartSheet() {
@@ -17,12 +18,54 @@ export function CartSheet() {
     getCartTotal 
   } = useCartStore();
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleCheckout = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error("Erro no retorno da API:", data);
+        
+        switch (data.error) {
+          case "ESTOQUE_INSUFICIENTE":
+            setErrorMessage(`Estoque insuficiente!\n${data.details}`);
+            break;
+          case "ERRO_API_NUVEMSHOP":
+            setErrorMessage(`Erro ao processar pedido.\n${data.details}`);
+            break;
+          case "ERRO_INTERNO":
+            setErrorMessage(`Erro interno no servidor.\nTente novamente mais tarde.`);
+            break;
+          default:
+            setErrorMessage(`Não foi possível finalizar.\n${data.message || "Erro desconhecido"}`);
+        }
+        
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Erro de rede:", error);
+      setErrorMessage("Erro de conexão. Verifique sua internet.");
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={toggleCart}>
-      {/* Container Principal */}
       <SheetContent className="w-full sm:max-w-md border-l border-border bg-background/95 backdrop-blur-xl p-0 shadow-2xl flex flex-col h-full">
         
-        {/* HEADER */}
         <SheetHeader className="px-6 pt-6 pb-4 border-b border-border bg-background/50 backdrop-blur-md flex-shrink-0">
           <SheetTitle className="font-display text-2xl font-bold flex items-center gap-3 text-foreground tracking-wide">
             <div className="p-2 bg-primary/10 rounded-lg text-primary border border-primary/20">
@@ -35,8 +78,30 @@ export function CartSheet() {
           </SheetTitle>
         </SheetHeader>
 
+        {errorMessage && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="px-6 pt-4"
+          >
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex gap-3 items-start">
+              <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-destructive whitespace-pre-line font-medium leading-tight">
+                  {errorMessage}
+                </p>
+                <button
+                  onClick={() => setErrorMessage(null)}
+                  className="text-xs text-destructive hover:text-destructive/80 underline mt-2"
+                >
+                  Dispensar
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {items.length === 0 ? (
-          // EMPTY STATE
           <div className="flex flex-col items-center justify-center h-full gap-6 text-muted-foreground p-8 text-center">
             <div className="w-24 h-24 rounded-full bg-secondary/50 flex items-center justify-center border border-border animate-pulse-slow">
               <PackageOpen className="w-10 h-10 opacity-50" />
@@ -51,7 +116,6 @@ export function CartSheet() {
           </div>
         ) : (
           <>
-            {/* LISTA DE ITENS */}
             <ScrollArea className="flex-1 px-6">
               <div className="py-6 space-y-4">
                 <AnimatePresence mode="popLayout">
@@ -64,7 +128,6 @@ export function CartSheet() {
                       key={`${item.id}-${item.selectedSize}`} 
                       className="group relative flex gap-4 p-3 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/20 transition-all duration-300 shadow-sm"
                     >
-                      {/* Imagem */}
                       <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-border bg-muted flex-shrink-0">
                         <img 
                           src={item.images[0]?.src} 
@@ -73,7 +136,6 @@ export function CartSheet() {
                         />
                       </div>
 
-                      {/* Info */}
                       <div className="flex-1 flex flex-col justify-between py-1">
                         <div>
                           <div className="flex justify-between items-start gap-2">
@@ -82,7 +144,7 @@ export function CartSheet() {
                             </h4>
                             <button 
                               onClick={() => removeItem(item.id, item.selectedSize)}
-                              className="text-muted-foreground hover:text-red-500 transition-colors p-2 -mr-2 -mt-2 rounded-md hover:bg-red-500/10"
+                              className="text-muted-foreground hover:text-destructive transition-colors p-2 -mr-2 -mt-2 rounded-md hover:bg-destructive/10"
                               aria-label="Remover item"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -96,8 +158,6 @@ export function CartSheet() {
                         </div>
                         
                         <div className="flex items-center justify-between mt-3">
-                          
-                          {/* SELETOR DE QUANTIDADE (AZUL PRIMÁRIO) */}
                           <div className="flex items-center h-8 bg-primary rounded-lg shadow-md shadow-primary/20">
                             <button 
                               onClick={() => updateQuantity(item.id, item.selectedSize, item.quantity - 1)}
@@ -145,9 +205,22 @@ export function CartSheet() {
                 </span>
               </div>
               
-              <Button className="w-full h-14 text-base font-bold uppercase tracking-wider bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-primary/25 transition-all duration-300 group rounded-xl">
-                Finalizar Compra
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <Button 
+                onClick={handleCheckout}
+                disabled={isLoading}
+                className="w-full h-14 text-base font-bold uppercase tracking-wider bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-primary/25 transition-all duration-300 group rounded-xl disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  <>
+                    Finalizar Compra
+                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
               </Button>
             </div>
           </>

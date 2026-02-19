@@ -30,7 +30,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-bold text-lg mb-1">E-mail</h3>
                   <p className="text-muted-foreground mb-2">Para suporte geral e parcerias.</p>
-                  <a href="mailto:suporte@sentaitshirt.com" className="text-primary hover:underline">suporte@sentaitshirt.com</a>
+                  <a href="mailto:sentaitshirt@gmail.com" className="text-primary hover:underline">sentaitshirt@gmail.com</a>
                 </div>
               </div>
 
@@ -41,7 +41,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-bold text-lg mb-1">WhatsApp</h3>
                   <p className="text-muted-foreground mb-2">Resposta rápida em horário comercial.</p>
-                  <a href="#" className="text-green-500 hover:underline">(85) 99999-9999</a>
+                  <a href="https://api.whatsapp.com/send/?phone=5585999066003&text&type=phone_number&app_absent=0" className="text-green-500 hover:underline">(85) 99906-6003</a>
                 </div>
               </div>
 
