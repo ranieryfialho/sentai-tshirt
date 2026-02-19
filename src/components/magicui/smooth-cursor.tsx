@@ -7,22 +7,25 @@ export function SmoothCursor() {
   const cursorX = useMotionValue(-100);
   const cursorY = useMotionValue(-100);
   const [isClicking, setIsClicking] = useState(false);
-  const [isHovering, setIsHovering] = useState(false); // Novo estado para detectar links/botões
+  const [isHovering, setIsHovering] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false); // Novo estado
 
-  // Física "Smart & Fast" (Mantida)
   const springConfig = { damping: 50, stiffness: 1000 };
   const cursorXSpring = useSpring(cursorX, springConfig);
   const cursorYSpring = useSpring(cursorY, springConfig);
 
   useEffect(() => {
+    const isTouch = window.matchMedia("(pointer: coarse)").matches;
+    setIsTouchDevice(isTouch);
+
+    if (isTouch) return;
+
     const moveCursor = (e: MouseEvent) => {
       cursorX.set(e.clientX);
       cursorY.set(e.clientY);
       
-      // Lógica de Detecção de Hover (Inteligência)
       const target = e.target as HTMLElement;
       
-      // Verifica se o elemento (ou pai) é interativo
       const isInteractive = 
         target.tagName === 'BUTTON' ||
         target.tagName === 'A' ||
@@ -48,27 +51,25 @@ export function SmoothCursor() {
     };
   }, [cursorX, cursorY]);
 
+  if (isTouchDevice) return null;
+
   return (
     <motion.div
       className="fixed top-0 left-0 pointer-events-none z-[9999]"
       style={{
         translateX: cursorXSpring,
         translateY: cursorYSpring,
-        x: "-2px", // Ajuste fino da ponta
+        x: "-2px",
         y: "-2px",
       }}
     >
       <motion.div
         animate={{
-          // Se estiver clicando: diminui (0.8)
-          // Se estiver sobre um link/botão (Hover): aumenta um pouco (1.2)
-          // Estado normal: 1
           scale: isClicking ? 0.8 : (isHovering ? 1.2 : 1),
-          rotate: isHovering ? -15 : 0, // Leve inclinação ao passar sobre links para dar dinamismo
+          rotate: isHovering ? -15 : 0, 
         }}
         transition={{ duration: 0.15, ease: "easeOut" }}
       >
-        {/* SVG Seta Outline */}
         <svg
           width="24"
           height="24"
@@ -79,9 +80,6 @@ export function SmoothCursor() {
         >
           <motion.path
             d="M5.5 3.5L19 10.5L11.5 12.5L10 19L3 5.5L5.5 3.5Z"
-            // Cores dinâmicas:
-            // Normal: Preto transparente com borda Branca
-            // Hover (Link): Fica sólido (Primary Color) para indicar ação
             fill={isHovering ? "rgba(59, 130, 246, 0.8)" : "rgba(0,0,0,0.4)"} 
             stroke={isHovering ? "rgba(59, 130, 246, 1)" : "white"}
             strokeWidth="1.5"

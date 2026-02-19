@@ -97,16 +97,18 @@
   z-index: 9999;
 }
 
-html, 
-body, 
-a, 
-button, 
-input, 
-textarea, 
-select, 
-[role="button"],
-.cursor-pointer {
-  cursor: none !important;
+@media (pointer: fine) {
+  html, 
+  body, 
+  a, 
+  button, 
+  input, 
+  textarea, 
+  select, 
+  [role="button"],
+  .cursor-pointer {
+    cursor: none !important;
+  }
 }
 
 .custom-scrollbar::-webkit-scrollbar {
