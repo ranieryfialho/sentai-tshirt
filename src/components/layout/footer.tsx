@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CreditCard, Instagram, Facebook, Twitter, Smartphone } from "lucide-react"; // Se não tiver Twitter, pode usar X ou remover
+import { CreditCard, Instagram, Facebook, Twitter, Smartphone, Code } from "lucide-react"; // Se não tiver Twitter, pode usar X ou remover
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -57,7 +57,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/politica-de-privacidade" className="text-muted-foreground hover:text-primary transition-colors">
                   Política de Privacidade
                 </Link>
               </li>
@@ -113,9 +113,17 @@ export function Footer() {
             © {currentYear} Sentai Tshirt. Todos os direitos reservados.
           </p>
           <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-            <span>Desenvolvido com</span>
-            <span className="text-red-500">♥</span>
-            <span>para fãs.</span>
+            <span>Desenvolvido</span>
+            <span>por</span>
+            <Code className="w-4 h-4 text-primary mx-0.5" strokeWidth={2.5} />
+            <a 
+              href="https://rafiweb.com.br" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="font-medium hover:text-primary transition-colors"
+            >
+              Rafiweb.
+            </a>
           </div>
         </div>
 

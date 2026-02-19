@@ -30,10 +30,19 @@ export default async function SearchPage({ searchParams }: Props) {
 
   const allProducts = await nuvemshopClient.getProducts();
 
-  let products = allProducts.filter((p) => 
-    p.name.toLowerCase().includes(query.toLowerCase()) || 
-    p.category.toLowerCase().includes(query.toLowerCase())
-  );
+  const term = query.toLowerCase();
+  let products = allProducts.filter((p) => {
+    const matchName = p.name.toLowerCase().includes(term);
+    
+    const matchCategoryString = p.category && p.category.toLowerCase().includes(term);
+    
+    const matchCategoriesArray = p.categories?.some((cat) => 
+      cat.name.toLowerCase().includes(term)
+    );
+
+    if (!term) return true;
+    return matchName || matchCategoryString || matchCategoriesArray;
+  });
 
   if (sizeFilter) {
     products = products.filter((p) => {
