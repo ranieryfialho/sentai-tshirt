@@ -8,8 +8,7 @@ export default function MinhaContaPage() {
 
   return (
     <main className="min-h-screen pt-24 pb-16 px-4 max-w-7xl mx-auto">
-      {/* Breadcrumb */}
-      <div className="text-xs text-muted-foreground uppercase tracking-wider mb-8 flex items-center gap-2">
+       <div className="text-xs text-muted-foreground uppercase tracking-wider mb-8 flex items-center gap-2">
         <Link href="/" className="hover:text-primary transition-colors">Home</Link>
         <span>&gt;</span>
         <span className="font-semibold text-foreground">Minha Conta</span>
@@ -17,10 +16,8 @@ export default function MinhaContaPage() {
 
       <div className="flex flex-col md:flex-row gap-8">
         
-        {/* SIDEBAR */}
         <aside className="w-full md:w-72 shrink-0">
           <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
-            {/* Perfil Header */}
             <div className="p-6 flex items-center gap-4 border-b">
               <div className="w-12 h-12 rounded-full border bg-muted flex items-center justify-center shrink-0">
                 <User className="w-6 h-6 text-muted-foreground" />
@@ -31,7 +28,6 @@ export default function MinhaContaPage() {
               </div>
             </div>
 
-            {/* Navegação */}
             <nav className="p-4 flex flex-col gap-1">
               <Link
                 href="/favoritos"
@@ -41,13 +37,11 @@ export default function MinhaContaPage() {
                 Meus Favoritos
               </Link>
 
-              {/* ABA ATIVA */}
               <div className="flex items-center gap-3 w-full p-3 rounded-lg bg-primary text-primary-foreground transition-colors text-sm font-medium">
                 <Package className="w-5 h-5" />
                 Meus Pedidos
               </div>
 
-              {/* DADOS PESSOAIS */}
               <a
                 href={nuvemshopAuthUrl}
                 target="_blank"
@@ -62,7 +56,6 @@ export default function MinhaContaPage() {
               </a>
             </nav>
 
-            {/* Ações de baixo */}
             <div className="p-4 border-t">
               <a 
                 href={nuvemshopAuthUrl}
@@ -77,7 +70,6 @@ export default function MinhaContaPage() {
           </div>
         </aside>
 
-        {/* CONTEÚDO PRINCIPAL: PEDIDOS */}
         <section className="flex-1">
           <div className="animate-in fade-in duration-300">
             <h1 className="text-3xl md:text-4xl font-light mb-2">Meus Pedidos</h1>
