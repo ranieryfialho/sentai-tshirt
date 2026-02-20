@@ -127,7 +127,7 @@ export default async function Home() {
                   Ver coleção completa &rarr;
                 </Link>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 {animeProducts.map((product, idx) => (
                   <BlurFade key={product.id} delay={idx * 0.1} inView>
                     <ProductCard product={product} index={idx} />
@@ -151,7 +151,7 @@ export default async function Home() {
                   Ver coleção completa &rarr;
                 </Link>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 {gamesProducts.map((product, idx) => (
                   <BlurFade key={product.id} delay={idx * 0.1} inView>
                     <ProductCard product={product} index={idx} />
