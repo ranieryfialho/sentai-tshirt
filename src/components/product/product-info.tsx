@@ -5,9 +5,9 @@ import { Product } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, ShieldCheck, Clock } from "lucide-react";
+import { ShoppingBag, ShieldCheck, Clock, Tag, Ticket } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCartStore, getCalculatedProductPrice } from "@/lib/store/cart-store"; // ⭐ IMPORT
+import { useCartStore } from "@/lib/store/cart-store";
 import { toast } from "sonner";
 import { FavoriteButton } from "@/components/product/favorite-button";
 
@@ -37,16 +37,26 @@ function sanitizeDescription(html: string): string {
 export function ProductInfo({ product }: ProductInfoProps) {
   const addItem = useCartStore((state) => state.addItem);
   
+  // ⭐ PROTEÇÃO: Verificar se product existe
+  if (!product) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <p className="text-muted-foreground">Carregando produto...</p>
+      </div>
+    );
+  }
+  
+  // ⭐ PROTEÇÃO: Verificar se variants existe e tem itens
   const sizes = Array.from(new Set(
-    product.variants.flatMap(v => 
-      v.values?.map(val => val.pt).filter((s): s is string => typeof s === "string" && s.length > 0) || []
+    (product.variants || []).flatMap(v => 
+      (v.values || []).map(val => val.pt).filter((s): s is string => typeof s === "string" && s.length > 0)
     )
   )).sort();
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
-  const selectedVariant = product.variants.find(v => 
-    v.values?.some(val => val.pt === selectedSize)
+  const selectedVariant = (product.variants || []).find(v => 
+    (v.values || []).some(val => val.pt === selectedSize)
   );
 
   const handleAddToCart = () => {
@@ -66,14 +76,23 @@ export function ProductInfo({ product }: ProductInfoProps) {
     toast.success("Produto adicionado ao carrinho!");
   };
 
-  const basePrice = selectedVariant?.price || product.price;
-  const basePromo = product.promotional_price || null;
-
-  const { price: currentPrice, promotional_price: currentPromo } = getCalculatedProductPrice({
-    ...product,
-    price: basePrice,
-    promotional_price: basePromo
-  });
+  // ⭐ Calcular preço considerando descontos
+  const hasNuvemshopDiscount = !!(product.promotional_price && product.promotional_price < product.price);
+  const percentagePromo = product.applicable_promotions?.find(p => p.type === 'percentage');
+  const buyXGetYPromo = product.applicable_promotions?.find(p => p.type === 'buy_x_get_y');
+  
+  let finalPrice = product.price;
+  let discountPercentage = 0;
+  
+  if (hasNuvemshopDiscount) {
+    finalPrice = product.promotional_price!;
+    discountPercentage = Math.round(((product.price - finalPrice) / product.price) * 100);
+  } else if (percentagePromo && percentagePromo.value) {
+    finalPrice = product.price * (1 - percentagePromo.value / 100);
+    discountPercentage = percentagePromo.value;
+  }
+  
+  const hasDiscount = finalPrice < product.price;
   
   const cleanDescription = useMemo(
     () => sanitizeDescription(product.description || ""),
@@ -99,19 +118,53 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
       <Separator className="bg-black/10 dark:bg-white/10" />
 
+      {/* ⭐ Mostrar promoções/cupons ativos */}
+      {(buyXGetYPromo || percentagePromo) && (
+        <div className="space-y-2">
+          {buyXGetYPromo && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
+              <Tag className="w-4 h-4 text-purple-600" />
+              <div className="flex-1">
+                <span className="text-sm font-bold text-purple-600">{buyXGetYPromo.name}</span>
+                <p className="text-xs text-purple-600/80 mt-0.5">
+                  Válido até {new Date(buyXGetYPromo.end_date).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {percentagePromo && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+              <Tag className="w-4 h-4 text-green-600" />
+              <div className="flex-1">
+                <span className="text-sm font-bold text-green-600">{percentagePromo.name}</span>
+                <p className="text-xs text-green-600/80 mt-0.5">
+                  {percentagePromo.value}% de desconto aplicado
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="space-y-1">
-        {currentPromo && (
+        {hasDiscount && (
           <p className="text-lg text-muted-foreground line-through font-mono">
-            R$ {currentPrice.toFixed(2)}
+            R$ {product.price.toFixed(2)}
           </p>
         )}
         <div className="flex items-end gap-2">
           <p className="text-5xl font-bold text-foreground tracking-tight">
-            R$ {currentPromo ? currentPromo.toFixed(2) : currentPrice.toFixed(2)}
+            R$ {finalPrice.toFixed(2)}
           </p>
+          {discountPercentage > 0 && (
+            <span className="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-full mb-2">
+              -{discountPercentage}%
+            </span>
+          )}
         </div>
         <p className="text-sm text-primary/80 font-medium">
-          até 3x de R$ {((currentPromo || currentPrice) / 3).toFixed(2)} sem juros
+          até 3x de R$ {(finalPrice / 3).toFixed(2)} sem juros
         </p>
       </div>
 
@@ -131,7 +184,9 @@ export function ProductInfo({ product }: ProductInfoProps) {
         <div className="flex flex-wrap gap-3">
           {sizes.length > 0 ? (
             sizes.map((size) => {
-              const variantExists = product.variants.some(v => v.values?.some(val => val.pt === size));
+              const variantExists = (product.variants || []).some(v => 
+                (v.values || []).some(val => val.pt === size)
+              );
               return (
                 <button
                   key={size}

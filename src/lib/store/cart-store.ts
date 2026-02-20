@@ -5,95 +5,41 @@ import { Product } from '@/types';
 export interface CartItem extends Product {
   quantity: number;
   selectedSize: string;
-}
-
-interface CartTotals {
-  rawSubtotal: number;
-  subtotal: number;
-  categoryDiscountTotal: number;
-  promotionDiscount: number;
-  couponDiscount: number;
-  totalDiscount: number;
-  total: number;
-}
-
-export type PromoType = 'BUY_X_GET_Y' | 'CATEGORY_PERCENTAGE';
-
-export interface PromotionRule {
-  id: string;
-  name: string;
-  active: boolean;
-  type: PromoType;
-  requiredQuantity?: number;
-  freeQuantity?: number;
-  targetCategory?: string; 
-  discountPercentage?: number; 
-}
-
-export const STORE_PROMOTIONS: PromotionRule[] = [
-  {
-    id: 'pague4-leve5',
-    name: 'Pague 4 Leve 5',
-    active: true,
-    type: 'BUY_X_GET_Y',
-    requiredQuantity: 5,
-    freeQuantity: 1
-  },
-  {
-    id: 'mes-dragon-ball',
-    name: 'Mês Dragon Ball',
-    active: true,
-    type: 'CATEGORY_PERCENTAGE',
-    targetCategory: 'Dragon Ball',
-    discountPercentage: 10
-  }
-];
-
-
-export function getCalculatedProductPrice(product: any, promotions = STORE_PROMOTIONS) {
-  const price = product.price || 0;
-  let promotional_price = product.promotional_price || null;
-
-  const activeRules = promotions.filter(p => p.active && p.type === 'CATEGORY_PERCENTAGE');
-
-  activeRules.forEach(rule => {
-    if (!rule.targetCategory || !rule.discountPercentage) return;
-
-    const categoryStr = String(product.category || "").toLowerCase();
-    const nameStr = String(product.name || "").toLowerCase();
-    const targetStr = rule.targetCategory.toLowerCase();
-
-    if (categoryStr.includes(targetStr) || nameStr.includes(targetStr)) {
-      const discountVal = price * (rule.discountPercentage / 100);
-      const newPromo = price - discountVal;
-
-      if (!promotional_price || newPromo < promotional_price) {
-        promotional_price = newPromo;
-      }
-    }
-  });
-
-  return { price, promotional_price };
+  finalPrice: number;
 }
 
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
   couponCode: string | null;
-  activePromotions: PromotionRule[];
-  
   addItem: (product: Product, size: string) => void;
   removeItem: (productId: number, size: string) => void;
   updateQuantity: (productId: number, size: string, quantity: number) => void;
   clearCart: () => void;
   toggleCart: () => void;
-  
+  getCartTotals: () => {
+    subtotal: number;
+    promotionDiscount: number;
+    couponDiscount: number;
+    totalDiscount: number;
+    total: number;
+  };
+  getCartCount: () => number;
   applyCoupon: (code: string) => boolean;
   removeCoupon: () => void;
-  syncPromotions: (promos: PromotionRule[]) => void;
+}
+
+function calculateProductFinalPrice(product: Product): number {
+  if (product.promotional_price && product.promotional_price < product.price) {
+    return product.promotional_price;
+  }
   
-  getCartTotals: () => CartTotals;
-  getCartCount: () => number;
+  const percentagePromo = product.applicable_promotions?.find(p => p.type === 'percentage');
+  if (percentagePromo && percentagePromo.value) {
+    return product.price * (1 - percentagePromo.value / 100);
+  }
+  
+  return product.price;
 }
 
 export const useCartStore = create<CartState>()(
@@ -102,10 +48,16 @@ export const useCartStore = create<CartState>()(
       items: [],
       isOpen: false,
       couponCode: null,
-      activePromotions: STORE_PROMOTIONS,
 
       addItem: (product, size) => {
         const { items } = get();
+        
+        const finalPrice = calculateProductFinalPrice(product);
+        
+        console.log(`🛒 Adicionando ao carrinho: ${product.name}`);
+        console.log(`   Preço original: R$ ${product.price.toFixed(2)}`);
+        console.log(`   Preço final: R$ ${finalPrice.toFixed(2)}`);
+        
         const existingItem = items.find(
           (item) => item.id === product.id && item.selectedSize === size
         );
@@ -121,7 +73,15 @@ export const useCartStore = create<CartState>()(
           });
         } else {
           set({
-            items: [...items, { ...product, quantity: 1, selectedSize: size }],
+            items: [
+              ...items, 
+              { 
+                ...product, 
+                quantity: 1, 
+                selectedSize: size,
+                finalPrice: finalPrice
+              }
+            ],
             isOpen: true,
           });
         }
@@ -150,83 +110,54 @@ export const useCartStore = create<CartState>()(
 
       toggleCart: () => set({ isOpen: !get().isOpen }),
 
-      applyCoupon: (code) => {
-        const upperCode = code.toUpperCase();
-        if (upperCode === 'SENTAI10') {
-          set({ couponCode: upperCode });
-          return true;
-        }
-        return false; 
-      },
-
-      removeCoupon: () => set({ couponCode: null }),
-
-      syncPromotions: (promos) => set({ activePromotions: promos }),
-
       getCartTotals: () => {
-        const { items, couponCode, activePromotions } = get();
+        const { items, couponCode } = get();
         
-        let rawSubtotal = 0;
-        let currentSubtotal = 0;
-        let categoryDiscountTotal = 0; 
-        let totalQuantity = 0;
-        const allPrices: number[] = [];
-
-        items.forEach(item => {
-          const basePrice = item.price;
-          rawSubtotal += basePrice * item.quantity;
-
-          const { promotional_price } = getCalculatedProductPrice(item, activePromotions);
-          const finalItemPrice = promotional_price || basePrice;
-
-          categoryDiscountTotal += (basePrice - finalItemPrice) * item.quantity;
-          currentSubtotal += finalItemPrice * item.quantity;
-          totalQuantity += item.quantity;
-          
-          for (let i = 0; i < item.quantity; i++) {
-            allPrices.push(finalItemPrice);
-          }
-        });
+        const subtotal = items.reduce((total, item) => {
+          return total + (item.finalPrice * item.quantity);
+        }, 0);
 
         let promotionDiscount = 0;
-        const activeRules = activePromotions.filter(promo => promo.active);
-
-        activeRules.forEach(promo => {
-          if (promo.type === 'BUY_X_GET_Y' && promo.requiredQuantity && promo.freeQuantity) {
-            if (totalQuantity >= promo.requiredQuantity) {
-              allPrices.sort((a, b) => a - b); 
-              const timesToApply = Math.floor(totalQuantity / promo.requiredQuantity);
-              const itemsToDiscount = timesToApply * promo.freeQuantity;
-
-              for (let i = 0; i < itemsToDiscount; i++) {
-                if (allPrices[i]) promotionDiscount += allPrices[i];
-              }
-            }
+        const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+        
+        if (totalItems >= 5) {
+          const sortedItems = [...items].sort((a, b) => a.finalPrice - b.finalPrice);
+          const cheapestItem = sortedItems[0];
+          if (cheapestItem) {
+            promotionDiscount = cheapestItem.finalPrice;
           }
-        });
-
-        let couponDiscount = 0;
-        if (couponCode === 'SENTAI10') {
-          couponDiscount = (currentSubtotal - promotionDiscount) * 0.10;
         }
 
-        const total = Math.max(0, currentSubtotal - promotionDiscount - couponDiscount);
-        
-        const totalDiscount = categoryDiscountTotal + promotionDiscount + couponDiscount;
+        let couponDiscount = 0;
+        if (couponCode) {
+          if (couponCode === 'COMPRА10' || couponCode === 'GRANDÃO10') {
+            couponDiscount = subtotal * 0.10;
+          }
+        }
 
-        return { 
-          rawSubtotal, 
-          subtotal: currentSubtotal, 
-          categoryDiscountTotal, 
-          promotionDiscount, 
-          couponDiscount, 
-          totalDiscount, 
-          total 
+        const totalDiscount = promotionDiscount + couponDiscount;
+        const total = Math.max(0, subtotal - totalDiscount);
+
+        return {
+          subtotal,
+          promotionDiscount,
+          couponDiscount,
+          totalDiscount,
+          total
         };
       },
 
       getCartCount: () => {
         return get().items.reduce((count, item) => count + item.quantity, 0);
+      },
+
+      applyCoupon: (code) => {
+        set({ couponCode: code.toUpperCase() });
+        return true;
+      },
+
+      removeCoupon: () => {
+        set({ couponCode: null });
       },
     }),
     {

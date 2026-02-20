@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Product } from "@/types";
 import { QuickAddButton } from "@/components/product/quick-add-btn";
 import { FavoriteButton } from "@/components/product/favorite-button";
-import { getCalculatedProductPrice } from "@/lib/store/cart-store";
+import { Tag } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
@@ -16,11 +16,33 @@ export function ProductCard({ product, index }: ProductCardProps) {
   const secondImage = product.images[1]?.src;
   const hasSecondImage = !!secondImage;
 
-  const { price, promotional_price } = getCalculatedProductPrice(product);
-
-  const discountPercentage = promotional_price 
-    ? Math.round(((price - promotional_price) / price) * 100) 
-    : 0;
+  // ⭐ Verificar promotional_price da Nuvemshop
+  const hasNuvemshopDiscount = !!(product.promotional_price && product.promotional_price < product.price);
+  
+  // ⭐ Verificar promoções aplicáveis (configuradas manualmente)
+  const percentagePromotion = product.applicable_promotions?.find(
+    p => p.type === 'percentage'
+  );
+  
+  const buyXGetYPromo = product.applicable_promotions?.find(
+    p => p.type === 'buy_x_get_y'
+  );
+  
+  // Calcular preço final e desconto
+  let finalPrice = product.price;
+  let discountPercentage = 0;
+  let hasDiscount = false;
+  
+  // ⭐ Prioridade: promotional_price > promoção percentual
+  if (hasNuvemshopDiscount) {
+    finalPrice = product.promotional_price!;
+    discountPercentage = Math.round(((product.price - finalPrice) / product.price) * 100);
+    hasDiscount = true;
+  } else if (percentagePromotion && percentagePromotion.value) {
+    finalPrice = product.price * (1 - percentagePromotion.value / 100);
+    discountPercentage = percentagePromotion.value;
+    hasDiscount = true;
+  }
 
   return (
     <Link href={`/produto/${product.slug}`} className="block h-full cursor-pointer group">
@@ -54,11 +76,23 @@ export function ProductCard({ product, index }: ProductCardProps) {
             <FavoriteButton product={product} />
           </div>
 
-          {promotional_price && (
-            <span className="absolute top-3 right-3 z-30 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
-              -{discountPercentage}%
-            </span>
-          )}
+          {/* ⭐ BADGES DINÂMICOS */}
+          <div className="absolute top-3 right-3 z-30 flex flex-col gap-2">
+            {/* Badge de Desconto Percentual */}
+            {hasDiscount && discountPercentage > 0 && (
+              <span className="bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1 animate-pulse">
+                <Tag className="w-3 h-3" />
+                -{discountPercentage}%
+              </span>
+            )}
+            
+            {/* Badge de Promoção "Pague X Leve Y" */}
+            {buyXGetYPromo && (
+              <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg text-center">
+                {buyXGetYPromo.name}
+              </span>
+            )}
+          </div>
 
         </div>
         
@@ -70,13 +104,13 @@ export function ProductCard({ product, index }: ProductCardProps) {
           
           <div className="pt-2 flex justify-between items-end border-t border-black/5 dark:border-white/10 mt-2">
             <div className="flex flex-col">
-              {promotional_price && (
+              {hasDiscount && (
                 <span className="text-xs text-muted-foreground line-through font-mono">
-                  R$ {price.toFixed(2)}
+                  R$ {product.price.toFixed(2)}
                 </span>
               )}
               <span className="text-xl font-display font-bold text-foreground">
-                R$ {promotional_price ? promotional_price.toFixed(2) : price.toFixed(2)}
+                R$ {finalPrice.toFixed(2)}
               </span>
             </div>
             

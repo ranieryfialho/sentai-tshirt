@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useCartStore, getCalculatedProductPrice } from "@/lib/store/cart-store"; // ⭐ IMPORT
+import { useCartStore } from "@/lib/store/cart-store";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area"; 
 import { Input } from "@/components/ui/input";
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, PackageOpen, Loader2, AlertCircle, Ticket } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, PackageOpen, Loader2, AlertCircle, Ticket, Gift } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function CartSheet() {
   const { 
     isOpen, toggleCart, items, removeItem, 
     updateQuantity, getCartTotals, applyCoupon, 
-    removeCoupon, couponCode, activePromotions 
+    removeCoupon, couponCode
   } = useCartStore();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -23,14 +23,30 @@ export function CartSheet() {
 
   const { subtotal, promotionDiscount, couponDiscount, totalDiscount, total } = getCartTotals();
 
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = async () => {
     if (!couponInput) return;
-    const isValid = applyCoupon(couponInput);
-    if (!isValid) {
-      setCouponError("Cupão inválido. Tente 'SENTAI10'.");
-    } else {
-      setCouponError("");
+    
+    setCouponError("");
+    
+    try {
+      // ⭐ Buscar cupons válidos da API
+      const response = await fetch('/api/coupons');
+      const activeCoupons = await response.json();
+      
+      const validCoupon = activeCoupons.find((c: any) => 
+        c.code.toUpperCase() === couponInput.toUpperCase()
+      );
+      
+      if (!validCoupon) {
+        setCouponError("Cupão inválido ou expirado.");
+        return;
+      }
+      
+      applyCoupon(validCoupon.code);
       setCouponInput("");
+      
+    } catch (error) {
+      setCouponError("Erro ao validar cupão.");
     }
   };
 
@@ -58,7 +74,7 @@ export function CartSheet() {
         setIsLoading(false);
       }
     } catch (error) {
-      setErrorMessage("Erro de ligação. Verifique a sua internet.");
+      setErrorMessage("Erro de conexão. Verifique sua internet.");
       setIsLoading(false);
     }
   };
@@ -100,7 +116,7 @@ export function CartSheet() {
             <div className="w-24 h-24 rounded-full bg-secondary/50 flex items-center justify-center border border-border">
               <PackageOpen className="w-10 h-10 opacity-50" />
             </div>
-            <p className="text-lg font-medium text-foreground">O seu inventário está vazio</p>
+            <p className="text-lg font-medium text-foreground">O seu carrinho está vazio</p>
             <Button variant="outline" onClick={toggleCart} className="border-primary/50 text-primary hover:bg-primary/10">
               Voltar para a Loja
             </Button>
@@ -111,8 +127,9 @@ export function CartSheet() {
               <div className="py-6 space-y-4">
                 <AnimatePresence mode="popLayout">
                   {items.map((item) => {
-                    const { price, promotional_price } = getCalculatedProductPrice(item, activePromotions);
-                    const itemFinalPrice = promotional_price || price;
+                    // ⭐ Usar finalPrice do item
+                    const itemPrice = item.finalPrice;
+                    const hasItemDiscount = itemPrice < item.price;
 
                     return (
                       <motion.div 
@@ -125,6 +142,11 @@ export function CartSheet() {
                       >
                         <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-border bg-muted flex-shrink-0">
                           <img src={item.images[0]?.src} alt={item.name} className="object-cover w-full h-full" />
+                          {hasItemDiscount && (
+                            <div className="absolute top-1 right-1 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              -{Math.round(((item.price - itemPrice) / item.price) * 100)}%
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex-1 flex flex-col justify-between py-1">
@@ -164,13 +186,13 @@ export function CartSheet() {
                             </div>
                             
                             <div className="flex flex-col items-end">
-                              {promotional_price && (
+                              {hasItemDiscount && (
                                 <span className="text-xs text-muted-foreground line-through font-mono">
-                                  R$ {(price * item.quantity).toFixed(2)}
+                                  R$ {(item.price * item.quantity).toFixed(2)}
                                 </span>
                               )}
                               <span className="font-bold text-sm tracking-tight text-foreground">
-                                R$ {(itemFinalPrice * item.quantity).toFixed(2)}
+                                R$ {(itemPrice * item.quantity).toFixed(2)}
                               </span>
                             </div>
                           </div>
@@ -184,6 +206,17 @@ export function CartSheet() {
 
             <div className="p-6 bg-background/80 border-t border-border backdrop-blur-xl flex-shrink-0 z-20">
               
+              {/* ⭐ ALERTA DE PROMOÇÃO "PAGUE 4 LEVE 5" */}
+              {items.reduce((sum, item) => sum + item.quantity, 0) >= 5 && promotionDiscount > 0 && (
+                <div className="mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 flex items-center gap-2">
+                  <Gift className="w-5 h-5 text-green-600" />
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-green-600">Promoção Ativa!</p>
+                    <p className="text-xs text-green-600/80">Pague 4 e Leve 5 - Desconto aplicado!</p>
+                  </div>
+                </div>
+              )}
+
               <div className="mb-6">
                 {!couponCode ? (
                   <div className="flex gap-2">
@@ -191,6 +224,7 @@ export function CartSheet() {
                       placeholder="Cupão de desconto" 
                       value={couponInput}
                       onChange={(e) => setCouponInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleApplyCoupon()}
                       className="bg-muted/50 focus-visible:ring-primary/50"
                     />
                     <Button variant="outline" onClick={handleApplyCoupon}>Aplicar</Button>
@@ -215,14 +249,20 @@ export function CartSheet() {
 
                 {promotionDiscount > 0 && (
                   <div className="flex justify-between text-sm text-green-600 dark:text-green-400 font-medium">
-                    <span>Promoção (Leve 5 Pague 4)</span>
+                    <span className="flex items-center gap-1">
+                      <Gift className="w-4 h-4" />
+                      Promoção (Pague 4 Leve 5)
+                    </span>
                     <span>- R$ {promotionDiscount.toFixed(2)}</span>
                   </div>
                 )}
 
                 {couponDiscount > 0 && (
                   <div className="flex justify-between text-sm text-green-600 dark:text-green-400 font-medium">
-                    <span>Desconto do Cupão</span>
+                    <span className="flex items-center gap-1">
+                      <Ticket className="w-4 h-4" />
+                      Cupão {couponCode}
+                    </span>
                     <span>- R$ {couponDiscount.toFixed(2)}</span>
                   </div>
                 )}
