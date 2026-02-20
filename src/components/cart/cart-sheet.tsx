@@ -29,7 +29,6 @@ export function CartSheet() {
     setCouponError("");
     
     try {
-      // ⭐ Buscar cupons válidos da API
       const response = await fetch('/api/coupons');
       const activeCoupons = await response.json();
       
@@ -38,7 +37,7 @@ export function CartSheet() {
       );
       
       if (!validCoupon) {
-        setCouponError("Cupão inválido ou expirado.");
+        setCouponError("Cupom inválido ou expirado.");
         return;
       }
       
@@ -46,7 +45,7 @@ export function CartSheet() {
       setCouponInput("");
       
     } catch (error) {
-      setCouponError("Erro ao validar cupão.");
+      setCouponError("Erro ao validar cupom.");
     }
   };
 
@@ -88,7 +87,7 @@ export function CartSheet() {
             <div className="p-2 bg-primary/10 rounded-lg text-primary border border-primary/20">
               <ShoppingBag className="w-5 h-5" />
             </div>
-            SEU CESTO
+            CARRINHO
             <span className="text-xs font-mono text-muted-foreground font-normal ml-auto border border-border px-2 py-1 rounded-md">
               {items.reduce((acc, item) => acc + item.quantity, 0)} ITEM(S)
             </span>
@@ -127,7 +126,6 @@ export function CartSheet() {
               <div className="py-6 space-y-4">
                 <AnimatePresence mode="popLayout">
                   {items.map((item) => {
-                    // ⭐ Usar finalPrice do item
                     const itemPrice = item.finalPrice;
                     const hasItemDiscount = itemPrice < item.price;
 
@@ -206,7 +204,6 @@ export function CartSheet() {
 
             <div className="p-6 bg-background/80 border-t border-border backdrop-blur-xl flex-shrink-0 z-20">
               
-              {/* ⭐ ALERTA DE PROMOÇÃO "PAGUE 4 LEVE 5" */}
               {items.reduce((sum, item) => sum + item.quantity, 0) >= 5 && promotionDiscount > 0 && (
                 <div className="mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 flex items-center gap-2">
                   <Gift className="w-5 h-5 text-green-600" />
@@ -221,7 +218,7 @@ export function CartSheet() {
                 {!couponCode ? (
                   <div className="flex gap-2">
                     <Input 
-                      placeholder="Cupão de desconto" 
+                      placeholder="Cupom de desconto" 
                       value={couponInput}
                       onChange={(e) => setCouponInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleApplyCoupon()}
@@ -233,7 +230,7 @@ export function CartSheet() {
                   <div className="flex items-center justify-between bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 p-3 rounded-lg">
                     <div className="flex items-center gap-2 font-medium">
                       <Ticket className="w-4 h-4" />
-                      Cupão {couponCode} aplicado!
+                      Cupom {couponCode} aplicado!
                     </div>
                     <button onClick={removeCoupon} className="text-xs hover:underline">Remover</button>
                   </div>
@@ -261,7 +258,7 @@ export function CartSheet() {
                   <div className="flex justify-between text-sm text-green-600 dark:text-green-400 font-medium">
                     <span className="flex items-center gap-1">
                       <Ticket className="w-4 h-4" />
-                      Cupão {couponCode}
+                      Cupom {couponCode}
                     </span>
                     <span>- R$ {couponDiscount.toFixed(2)}</span>
                   </div>

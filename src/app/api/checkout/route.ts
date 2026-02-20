@@ -4,21 +4,18 @@ const STORE_ID = process.env.NUVEMSHOP_USER_ID;
 const ACCESS_TOKEN = process.env.NUVEMSHOP_ACCESS_TOKEN;
 const API_URL = process.env.NUVEMSHOP_API_URL;
 
-/**
- * ⭐ Criar cupom temporário com desconto fixo em reais
- */
 async function createTempCoupon(discountAmount: number): Promise<string | null> {
   try {
     const couponCode = `PROMO${Date.now()}`;
     
     const couponPayload = {
       code: couponCode,
-      type: "absolute", // Desconto FIXO em reais
+      type: "absolute",
       value: discountAmount.toString(),
       valid: true,
-      max_uses: null, // Ilimitado (será deletado depois)
+      max_uses: null,
       includes_shipping: false,
-      combines_with_other_discounts: true, // ⭐ IMPORTANTE
+      combines_with_other_discounts: true,
     };
 
     console.log("🎫 Criando cupom temporário:", couponPayload);
@@ -60,10 +57,8 @@ export async function POST(request: Request) {
     console.log("\n=== CRIANDO DRAFT ORDER ===");
     console.log("📦 Items recebidos:", items.length);
 
-    // ⭐ CALCULAR TOTAL E DESCONTO
     const totalItems = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
     
-    // Calcular subtotal real (com desconto Dragon Ball já aplicado)
     const subtotal = items.reduce((sum: number, item: any) => {
       return sum + (item.finalPrice * item.quantity);
     }, 0);
@@ -71,7 +66,6 @@ export async function POST(request: Request) {
     console.log("💰 Subtotal calculado:", subtotal.toFixed(2));
     console.log("🛒 Total de itens:", totalItems);
 
-    // ⭐ CALCULAR DESCONTO "PAGUE 4 LEVE 5"
     let buyXGetYDiscount = 0;
     
     if (totalItems >= 5) {
@@ -84,7 +78,6 @@ export async function POST(request: Request) {
 
     console.log("🎁 Desconto Pague 4 Leve 5:", buyXGetYDiscount.toFixed(2));
 
-    // ⭐ PREPARAR PRODUTOS
     const products = items.map((item: any) => {
       let correctVariantId = item.id;
 
@@ -109,10 +102,8 @@ export async function POST(request: Request) {
       };
     });
 
-    // ⭐ DETERMINAR CUPOM A SER USADO
     let finalCouponCode = null;
     
-    // Se tem desconto "Pague 4 Leve 5", criar cupom temporário
     if (buyXGetYDiscount > 0) {
       console.log("\n🎫 Criando cupom para Pague 4 Leve 5...");
       finalCouponCode = await createTempCoupon(buyXGetYDiscount);
@@ -122,13 +113,11 @@ export async function POST(request: Request) {
       }
     }
     
-    // Se usuário aplicou cupom real (COMPRА10, etc), usar ele
     if (couponCode && !couponCode.startsWith('DRAFT')) {
       finalCouponCode = couponCode;
       console.log("🎫 Usando cupom do usuário:", couponCode);
     }
 
-    // ⭐ CRIAR DRAFT ORDER
     const draftOrderPayload: any = {
       contact_email: "cliente@exemplo.com",
       contact_name: "Cliente",
@@ -206,7 +195,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // ⭐ VERIFICAR SE CUPOM FOI APLICADO
     console.log("💰 Subtotal retornado:", data.subtotal);
     console.log("💰 Desconto cupom retornado:", data.discount_coupon);
     console.log("💰 Total retornado:", data.total);
