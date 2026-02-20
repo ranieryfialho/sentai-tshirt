@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { Product } from "@/types";
 import { QuickAddButton } from "@/components/product/quick-add-btn";
-import { FavoriteButton } from "@/components/product/favorite-button"; // ⭐ IMPORT
+import { FavoriteButton } from "@/components/product/favorite-button";
+import { getCalculatedProductPrice } from "@/lib/store/cart-store";
 
 interface ProductCardProps {
   product: Product;
@@ -15,8 +16,10 @@ export function ProductCard({ product, index }: ProductCardProps) {
   const secondImage = product.images[1]?.src;
   const hasSecondImage = !!secondImage;
 
-  const discountPercentage = product.promotional_price 
-    ? Math.round(((product.price - product.promotional_price) / product.price) * 100) 
+  const { price, promotional_price } = getCalculatedProductPrice(product);
+
+  const discountPercentage = promotional_price 
+    ? Math.round(((price - promotional_price) / price) * 100) 
     : 0;
 
   return (
@@ -47,13 +50,11 @@ export function ProductCard({ product, index }: ProductCardProps) {
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20" />
           
-          {/* ⭐ BOTÃO DE FAVORITO - CANTO SUPERIOR ESQUERDO */}
           <div className="absolute top-3 left-3 z-30" onClick={(e) => e.preventDefault()}>
             <FavoriteButton product={product} />
           </div>
 
-          {/* BADGE DE DESCONTO - CANTO SUPERIOR DIREITO */}
-          {product.promotional_price && (
+          {promotional_price && (
             <span className="absolute top-3 right-3 z-30 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
               -{discountPercentage}%
             </span>
@@ -69,13 +70,13 @@ export function ProductCard({ product, index }: ProductCardProps) {
           
           <div className="pt-2 flex justify-between items-end border-t border-black/5 dark:border-white/10 mt-2">
             <div className="flex flex-col">
-              {product.promotional_price && (
+              {promotional_price && (
                 <span className="text-xs text-muted-foreground line-through font-mono">
-                  R$ {product.price.toFixed(2)}
+                  R$ {price.toFixed(2)}
                 </span>
               )}
               <span className="text-xl font-display font-bold text-foreground">
-                R$ {product.promotional_price ? product.promotional_price.toFixed(2) : product.price.toFixed(2)}
+                R$ {promotional_price ? promotional_price.toFixed(2) : price.toFixed(2)}
               </span>
             </div>
             

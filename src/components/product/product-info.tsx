@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, ShieldCheck, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCartStore } from "@/lib/store/cart-store";
+import { useCartStore, getCalculatedProductPrice } from "@/lib/store/cart-store"; // ⭐ IMPORT
 import { toast } from "sonner";
 import { FavoriteButton } from "@/components/product/favorite-button";
 
@@ -17,31 +17,20 @@ interface ProductInfoProps {
 
 function sanitizeDescription(html: string): string {
   if (!html) return "";
-  
   let clean = html;
-  
   clean = clean.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-  
   clean = clean.replace(/\s+style="[^"]*"/gi, '');
   clean = clean.replace(/\s+style='[^']*'/gi, '');
-
   clean = clean.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-
   clean = clean.replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '');
-
   clean = clean.replace(/\s+on\w+="[^"]*"/gi, '');
   clean = clean.replace(/\s+on\w+='[^']*'/gi, '');
-  
   clean = clean.replace(/\s+class=""/gi, '');
   clean = clean.replace(/\s+class=''/gi, '');
-  
   clean = clean.replace(/\s+id="[^"]*"/gi, '');
   clean = clean.replace(/\s+id='[^']*'/gi, '');
-  
   clean = clean.replace(/>\s+</g, '><');
-  
   clean = clean.replace(/\n\s*\n/g, '\n');
-  
   return clean.trim();
 }
 
@@ -74,12 +63,17 @@ export function ProductInfo({ product }: ProductInfoProps) {
     };
 
     addItem(productToAdd, selectedSize);
-    
     toast.success("Produto adicionado ao carrinho!");
   };
 
-  const currentPrice = selectedVariant?.price || product.price;
-  const currentPromo = product.promotional_price;
+  const basePrice = selectedVariant?.price || product.price;
+  const basePromo = product.promotional_price || null;
+
+  const { price: currentPrice, promotional_price: currentPromo } = getCalculatedProductPrice({
+    ...product,
+    price: basePrice,
+    promotional_price: basePromo
+  });
   
   const cleanDescription = useMemo(
     () => sanitizeDescription(product.description || ""),
@@ -107,7 +101,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
       <div className="space-y-1">
         {currentPromo && (
-          <p className="text-lg text-muted-foreground line-through">
+          <p className="text-lg text-muted-foreground line-through font-mono">
             R$ {currentPrice.toFixed(2)}
           </p>
         )}
@@ -117,7 +111,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
           </p>
         </div>
         <p className="text-sm text-primary/80 font-medium">
-          até 3x de R$ {(currentPrice / 3).toFixed(2)} sem juros
+          até 3x de R$ {((currentPromo || currentPrice) / 3).toFixed(2)} sem juros
         </p>
       </div>
 

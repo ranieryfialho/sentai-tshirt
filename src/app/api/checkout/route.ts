@@ -6,7 +6,7 @@ const ACCESS_TOKEN = process.env.NUVEMSHOP_ACCESS_TOKEN;
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { items } = body;
+    const { items, discount, couponCode } = body; 
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Carrinho vazio" }, { status: 400 });
@@ -14,16 +14,17 @@ export async function POST(request: Request) {
 
     console.log("=== CRIANDO DRAFT ORDER ===");
 
-    const draftOrderPayload = {
+    const draftOrderPayload: any = {
       contact_email: "cliente@exemplo.com",
       contact_name: "Cliente",
       contact_lastname: "SentaiTshirt",
+      discount: discount || 0,
+      ...(couponCode && { coupon: couponCode }),
       products: items.map((item: any) => {
-        // Encontra o variant_id baseado no tamanho (selectedSize) do zustand
-        let correctVariantId = item.id; // Fallback inicial
+        let correctVariantId = item.id;
 
         if (item.variants && item.variants.length > 0) {
-          correctVariantId = item.variants[0].id; // Fallback para a primeira variante
+          correctVariantId = item.variants[0].id;
 
           if (item.selectedSize) {
             const matchedVariant = item.variants.find((v: any) => 
