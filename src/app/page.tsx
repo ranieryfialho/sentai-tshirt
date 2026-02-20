@@ -1,24 +1,17 @@
-import Link from "next/link";
 import { nuvemshopClient } from "@/lib/api/nuuvemshop-client";
-import { BlurFade } from "@/components/magicui/blur-fade";
-import { ProductCard } from "@/components/product/product-card";
 import { HeroCarousel } from "@/components/hero-carousel";
+import { ProductCard } from "@/components/product/product-card";
+import { BlurFade } from "@/components/magicui/blur-fade";
 import { ShippingBanner } from "@/components/shipping-banner";
-import { Button } from "@/components/ui/button";
-import { 
-  ShieldCheck, Truck, CreditCard, Zap, Tag, Gamepad2, BookOpen, Tv 
-} from "lucide-react";
+import { ShieldCheck, CreditCard, Truck, Zap, Tag, Gamepad2, BookOpen, Tv } from "lucide-react";
+import Link from "next/link";
 
-const PromoBanner = ({ title, color }: { title: string, color: string }) => (
-  <div className={`w-full h-[250px] md:h-[300px] rounded-3xl overflow-hidden relative group my-16 border border-white/10 ${color} shadow-2xl`}>
-    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+const PromoBanner = ({ title, color }: { title: string; color: string }) => (
+  <div className={`relative h-48 md:h-64 rounded-3xl overflow-hidden group cursor-pointer ${color} border border-white/10 backdrop-blur-sm`}>
     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-10">
       <h3 className="text-3xl md:text-5xl font-display font-bold text-white mb-4 uppercase tracking-tighter drop-shadow-lg">
         {title}
       </h3>
-      <Button variant="secondary" className="rounded-full font-bold px-8 shadow-lg hover:scale-105 transition-transform">
-        Conferir Coleção
-      </Button>
     </div>
     <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
   </div>
@@ -108,15 +101,14 @@ export default async function Home() {
                     </div>
                     <div>
                       <h2 className="text-2xl font-bold font-display text-foreground">Ofertas Relâmpago</h2>
-                      <p className="text-sm text-red-400 font-medium">Descontos por tempo limitado</p>
+                      <p className="text-sm text-muted-foreground">Produtos em promoção por tempo limitado</p>
                     </div>
                   </div>
-                  <Link href="/ofertas" className="text-sm font-bold text-red-500 hover:text-red-400 transition-colors flex items-center gap-1">
-                    Ver todas <span className="text-lg">→</span>
+                  <Link href="/loja" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors hidden md:block">
+                    Ver todas &rarr;
                   </Link>
                 </div>
               </BlurFade>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {discountedProducts.map((product, idx) => (
                   <BlurFade key={product.id} delay={idx * 0.1} inView>
@@ -131,7 +123,7 @@ export default async function Home() {
             <section>
               <div className="flex items-center justify-between mb-8 border-l-4 border-purple-500 pl-4">
                 <h2 className="text-3xl font-bold font-display">Animes</h2>
-                <Link href="/categoria/camisetas?filter=anime" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                <Link href="/categoria/animes" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
                   Ver coleção completa &rarr;
                 </Link>
               </div>
@@ -155,7 +147,7 @@ export default async function Home() {
                 <h2 className="text-3xl font-bold font-display flex items-center gap-2">
                   Games <Gamepad2 className="w-6 h-6 text-green-500" />
                 </h2>
-                <Link href="/categoria/camisetas?filter=games" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                <Link href="/categoria/games" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
                   Ver coleção completa &rarr;
                 </Link>
               </div>
@@ -185,7 +177,7 @@ export default async function Home() {
                   <h2 className="text-2xl font-bold font-display flex items-center gap-2 text-foreground">
                      <BookOpen className="w-5 h-5 text-yellow-500" /> Comics
                   </h2>
-                  <Link href="/categoria/camisetas?filter=comics" className="text-sm text-primary hover:underline">Ver mais</Link>
+                  <Link href="/categoria/comics" className="text-sm text-primary hover:underline">Ver mais</Link>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {comicsProducts.map((product, idx) => (
@@ -205,7 +197,7 @@ export default async function Home() {
                   <h2 className="text-2xl font-bold font-display flex items-center gap-2 text-foreground">
                     <Tv className="w-5 h-5 text-red-500" /> Tokusatsu
                   </h2>
-                  <Link href="/categoria/camisetas?filter=tokusatsu" className="text-sm text-primary hover:underline">Ver mais</Link>
+                  <Link href="/categoria/tokusatsu" className="text-sm text-primary hover:underline">Ver mais</Link>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {tokusatsuProducts.map((product, idx) => (
