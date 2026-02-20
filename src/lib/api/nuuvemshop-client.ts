@@ -44,7 +44,7 @@ export const nuvemshopClient = {
     try {
       const res = await fetch(`${API_URL}/${USER_ID}/coupons`, {
         headers,
-        next: { revalidate: 300 } // Cache de 5 minutos
+        next: { revalidate: 300 }
       });
 
       if (!res.ok) {
@@ -82,7 +82,6 @@ export const nuvemshopClient = {
     if (!ACCESS_TOKEN) return [];
 
     try {
-      // Buscar produtos, cupons e promoções em paralelo
       const [productsRes, coupons, promotions] = await Promise.all([
         fetch(`${API_URL}/${USER_ID}/products?include_all=true&per_page=100`, {
           headers,
@@ -98,80 +97,36 @@ export const nuvemshopClient = {
 
       const data = await productsRes.json();
 
-      // ⭐ Log das promoções ativas
-      console.log('🎯 PROMOÇÕES ATIVAS:', promotions.map(p => ({
-        id: p.id,
-        name: p.name,
-        type: p.type,
-        applies_to: p.applies_to,
-        category_ids: p.category_ids
-      })));
-
       return data.map((item: any) => {
         const productName = item.name.pt || item.name;
         const categoryIds = item.categories?.map((cat: any) => cat.id) || [];
         
-        console.log(`\n📦 Produto: ${productName}`);
-        console.log(`📂 Categorias do produto:`, item.categories?.map((cat: any) => ({
-          id: cat.id,
-          name: cat.name.pt || cat.name
-        })));
-        console.log(`🔢 IDs das categorias: [${categoryIds.join(', ')}]`);
-        
-        // ⭐ Filtrar cupons aplicáveis ao produto
+        // Filtrar cupons aplicáveis ao produto
         const applicableCoupons = coupons.filter(coupon => {
-          // Se não tem restrição, aplica a todos
           if (!coupon.categories && !coupon.products) return true;
-          
-          // Se aplica a produtos específicos
           if (coupon.products && coupon.products.includes(item.id)) return true;
-          
-          // Se aplica a categorias específicas
           if (coupon.categories && coupon.categories.some(id => categoryIds.includes(id))) return true;
-          
           return false;
         });
 
-        // ⭐ Filtrar promoções aplicáveis COM LOG DETALHADO
+        // Filtrar promoções aplicáveis
         const applicablePromotions = promotions.filter(promo => {
-          console.log(`  🔍 Testando promoção: ${promo.name}`);
-          console.log(`     - Aplica em: ${promo.applies_to}`);
-          console.log(`     - Tipo: ${promo.type}`);
-          
-          // Se aplica a todos os produtos
           if (promo.applies_to === 'all') {
-            const result = promo.type === 'buy_x_get_y';
-            console.log(`     - Resultado (all): ${result}`);
-            return result;
+            return promo.type === 'buy_x_get_y';
           }
           
-          // Se aplica a produtos específicos
           if (promo.applies_to === 'products' && promo.product_ids) {
-            const result = promo.product_ids.includes(item.id);
-            console.log(`     - Resultado (products): ${result}`);
-            return result;
+            return promo.product_ids.includes(item.id);
           }
           
-          // Se aplica a categorias específicas
           if (promo.applies_to === 'categories' && promo.category_ids) {
-            console.log(`     - IDs da promoção: [${promo.category_ids.join(', ')}]`);
-            console.log(`     - IDs do produto: [${categoryIds.join(', ')}]`);
-            
-            const hasMatchingCategory = promo.category_ids.some(promoCategory => {
-              const match = categoryIds.includes(promoCategory);
-              console.log(`       • Promoção ID ${promoCategory} === Produto? ${match}`);
-              return match;
-            });
-            
-            console.log(`     - ✅ Match encontrado: ${hasMatchingCategory}`);
-            return hasMatchingCategory;
+            return promo.category_ids.some(promoCategory => 
+              categoryIds.includes(promoCategory)
+            );
           }
           
-          console.log(`     - ❌ Nenhum critério atendido`);
           return false;
         });
-
-        console.log(`✅ Promoções aplicadas: ${applicablePromotions.map(p => p.name).join(', ') || 'NENHUMA'}`);
 
         return {
           id: item.id,
