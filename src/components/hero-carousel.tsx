@@ -9,11 +9,12 @@ import { motion, AnimatePresence } from "framer-motion";
 const slides = [
   {
     id: 1,
-    title: "VISTA SUA PAIXÃO GEEK",
-    subtitle: "A maior coleção de estampas exclusivas do Brasil.",
-    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2670&auto=format&fit=crop",
-    cta: "Explorar Loja",
-    link: "/categoria/camisetas"
+    title: "PAGUE 4, LEVE 5",
+    subtitle: "+ FRETE GRÁTIS PARA TODO O BRASIL. TEMPO LIMITADO!",
+    image: "banners/crss1.webp",
+    cta: "GARANTIR MINHAS CAMISETAS AGORA",
+    link: "/loja",
+    position: "bottom-right"
   },
   {
     id: 2,
@@ -21,7 +22,8 @@ const slides = [
     subtitle: "Camisetas inspiradas nos maiores clássicos dos games.",
     image: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=2665&auto=format&fit=crop",
     cta: "Ver Coleção Games",
-    link: "/categoria/camisetas?filter=games"
+    link: "/categoria/camisetas?filter=games",
+    position: "center"
   },
   {
     id: 3,
@@ -29,7 +31,8 @@ const slides = [
     subtitle: "Do Shonen ao Seinen, vista seu anime favorito.",
     image: "https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=2670&auto=format&fit=crop",
     cta: "Ver Coleção Animes",
-    link: "/categoria/camisetas?filter=animes"
+    link: "/categoria/camisetas?filter=animes",
+    position: "center"
   }
 ];
 
@@ -42,10 +45,17 @@ export function HeroCarousel() {
   useEffect(() => {
     const timer = setInterval(() => {
       next();
-    }, 5000);
+    }, 10000); 
 
     return () => clearInterval(timer);
   }, [current]);
+
+  const getAlignmentClasses = (position: string) => {
+    if (position === "bottom-right") {
+      return "justify-end items-end text-right pb-48 md:pb-56 pr-4 md:pr-12";
+    }
+    return "justify-center items-center text-center";
+  };
 
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden border-b border-white/10 group bg-black">
@@ -67,7 +77,7 @@ export function HeroCarousel() {
         </motion.div>
       </AnimatePresence>
 
-      <div className="absolute inset-0 z-20 container mx-auto px-4 flex flex-col justify-center items-center text-center">
+      <div className={`absolute inset-0 z-20 container mx-auto px-4 flex flex-col ${getAlignmentClasses(slides[current].position)}`}>
         <motion.div
           key={`text-${current}`}
           initial={{ y: 20, opacity: 0 }}
@@ -78,7 +88,7 @@ export function HeroCarousel() {
           <h1 className="text-5xl md:text-8xl font-display font-bold text-white mb-6 leading-none tracking-tighter drop-shadow-xl">
             {slides[current].title}
           </h1>
-          <p className="text-lg md:text-2xl text-gray-200 mb-8 font-light tracking-wide">
+          <p className="text-lg md:text-2xl text-gray-200 mb-8 font-light tracking-wide drop-shadow-md">
             {slides[current].subtitle}
           </p>
           <Link href={slides[current].link}>
