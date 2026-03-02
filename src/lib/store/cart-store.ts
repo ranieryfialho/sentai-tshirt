@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Product } from '@/types';
+import { Product, Coupon } from '@/types';
+import { getActivePromotions } from '@/lib/config/promotions';
 
 export interface CartItem extends Product {
   quantity: number;
@@ -12,6 +13,7 @@ interface CartState {
   items: CartItem[];
   isOpen: boolean;
   couponCode: string | null;
+  appliedCoupon: Coupon | null;
   addItem: (product: Product, size: string) => void;
   removeItem: (productId: number, size: string) => void;
   updateQuantity: (productId: number, size: string, quantity: number) => void;
@@ -25,7 +27,7 @@ interface CartState {
     total: number;
   };
   getCartCount: () => number;
-  applyCoupon: (code: string) => boolean;
+  applyCoupon: (coupon: Coupon) => boolean;
   removeCoupon: () => void;
 }
 
@@ -33,12 +35,12 @@ function calculateProductFinalPrice(product: Product): number {
   if (product.promotional_price && product.promotional_price < product.price) {
     return product.promotional_price;
   }
-  
+
   const percentagePromo = product.applicable_promotions?.find(p => p.type === 'percentage');
   if (percentagePromo && percentagePromo.value) {
     return product.price * (1 - percentagePromo.value / 100);
   }
-  
+
   return product.price;
 }
 
@@ -48,16 +50,12 @@ export const useCartStore = create<CartState>()(
       items: [],
       isOpen: false,
       couponCode: null,
+      appliedCoupon: null,
 
       addItem: (product, size) => {
         const { items } = get();
-        
         const finalPrice = calculateProductFinalPrice(product);
-        
-        console.log(`🛒 Adicionando ao carrinho: ${product.name}`);
-        console.log(`   Preço original: R$ ${product.price.toFixed(2)}`);
-        console.log(`   Preço final: R$ ${finalPrice.toFixed(2)}`);
-        
+
         const existingItem = items.find(
           (item) => item.id === product.id && item.selectedSize === size
         );
@@ -74,13 +72,13 @@ export const useCartStore = create<CartState>()(
         } else {
           set({
             items: [
-              ...items, 
-              { 
-                ...product, 
-                quantity: 1, 
+              ...items,
+              {
+                ...product,
+                quantity: 1,
                 selectedSize: size,
-                finalPrice: finalPrice
-              }
+                finalPrice,
+              },
             ],
             isOpen: true,
           });
@@ -106,33 +104,40 @@ export const useCartStore = create<CartState>()(
         });
       },
 
-      clearCart: () => set({ items: [], couponCode: null }),
+      clearCart: () => set({ items: [], couponCode: null, appliedCoupon: null }),
 
       toggleCart: () => set({ isOpen: !get().isOpen }),
 
       getCartTotals: () => {
-        const { items, couponCode } = get();
-        
+        const { items, appliedCoupon } = get();
+
         const subtotal = items.reduce((total, item) => {
           return total + (item.finalPrice * item.quantity);
         }, 0);
 
+        // ✅ Consulta getActivePromotions() — respeita enabled, start_date e end_date
+        const activePromotions = getActivePromotions();
+        const buyXGetYPromo = activePromotions.find(p => p.type === 'buy_x_get_y');
+
         let promotionDiscount = 0;
-        const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-        
-        if (totalItems >= 5) {
-          const sortedItems = [...items].sort((a, b) => a.finalPrice - b.finalPrice);
-          const cheapestItem = sortedItems[0];
-          if (cheapestItem) {
-            promotionDiscount = cheapestItem.finalPrice;
+        if (buyXGetYPromo) {
+          const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+          if (totalItems >= (buyXGetYPromo.min_quantity ?? 5)) {
+            const sortedItems = [...items].sort((a, b) => a.finalPrice - b.finalPrice);
+            promotionDiscount = sortedItems[0]?.finalPrice ?? 0;
           }
         }
 
+        // Desconto do cupom
         let couponDiscount = 0;
-        if (couponCode) {
-          if (couponCode === 'COMPRА10' || couponCode === 'GRANDÃO10') {
-            couponDiscount = subtotal * 0.10;
+        if (appliedCoupon) {
+          const discountValue = parseFloat(appliedCoupon.value);
+          if (appliedCoupon.type === 'percentage') {
+            couponDiscount = subtotal * (discountValue / 100);
+          } else if (appliedCoupon.type === 'absolute') {
+            couponDiscount = discountValue;
           }
+          couponDiscount = Math.min(couponDiscount, subtotal);
         }
 
         const totalDiscount = promotionDiscount + couponDiscount;
@@ -143,7 +148,7 @@ export const useCartStore = create<CartState>()(
           promotionDiscount,
           couponDiscount,
           totalDiscount,
-          total
+          total,
         };
       },
 
@@ -151,17 +156,17 @@ export const useCartStore = create<CartState>()(
         return get().items.reduce((count, item) => count + item.quantity, 0);
       },
 
-      applyCoupon: (code) => {
-        set({ couponCode: code.toUpperCase() });
+      applyCoupon: (coupon: Coupon) => {
+        set({ couponCode: coupon.code.toUpperCase(), appliedCoupon: coupon });
         return true;
       },
 
       removeCoupon: () => {
-        set({ couponCode: null });
+        set({ couponCode: null, appliedCoupon: null });
       },
     }),
     {
-      name: 'sentai-cart-storage',
+      name: 'sentai-cart-storage-v2',
       storage: createJSONStorage(() => localStorage),
     }
   )
