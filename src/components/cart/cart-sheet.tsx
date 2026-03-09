@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCartStore } from "@/lib/store/cart-store";
+import { getActivePromotions } from "@/lib/config/promotions";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,6 +27,11 @@ export function CartSheet() {
   const [couponError, setCouponError] = useState("");
 
   const { subtotal, promotionDiscount, couponDiscount, total } = getCartTotals();
+
+  // ✅ Pega o nome da promoção buy_x_get_y ativa direto da tabela verdade
+  const activePromos = getActivePromotions();
+  const buyXGetYPromo = activePromos.find(p => p.type === 'buy_x_get_y');
+  const promoLabel = buyXGetYPromo?.name ?? "Promoção";
 
   const handleApplyCoupon = async () => {
     if (!couponInput.trim()) return;
@@ -243,19 +249,16 @@ export function CartSheet() {
             {/* Rodapé */}
             <div className="p-6 bg-background/80 border-t border-border backdrop-blur-xl flex-shrink-0 z-20 space-y-4">
 
-              {/* Banner Pague 4 Leve 5 */}
-              {items.reduce((sum, item) => sum + item.quantity, 0) >= 5 &&
-                promotionDiscount > 0 && (
-                  <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 flex items-center gap-2">
-                    <Gift className="w-5 h-5 text-green-600 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-green-600">Promoção Ativa!</p>
-                      <p className="text-xs text-green-600/80">
-                        Pague 4 e Leve 5 — desconto aplicado automaticamente.
-                      </p>
-                    </div>
+              {/* ✅ Banner de promoção: aparece sempre que houver desconto ativo */}
+              {promotionDiscount > 0 && (
+                <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 flex items-center gap-2">
+                  <Gift className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-green-600">Promoção Ativa!</p>
+                    <p className="text-xs text-green-600/80">{promoLabel}</p>
                   </div>
-                )}
+                </div>
+              )}
 
               {/* Campo de cupom */}
               <div>
@@ -283,7 +286,6 @@ export function CartSheet() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {/* Badge cupom válido */}
                     <div className="flex items-center justify-between bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 p-3 rounded-lg">
                       <div className="flex items-center gap-2 font-medium text-sm">
                         <Ticket className="w-4 h-4 flex-shrink-0" />
@@ -299,7 +301,6 @@ export function CartSheet() {
                       </button>
                     </div>
 
-                    {/* Aviso de estimativa */}
                     <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                       <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                       <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
@@ -324,11 +325,12 @@ export function CartSheet() {
                   </span>
                 </div>
 
+                {/* ✅ Label dinâmico com o nome real da promoção */}
                 {promotionDiscount > 0 && (
                   <div className="flex justify-between text-sm text-green-600 dark:text-green-400 font-medium">
                     <span className="flex items-center gap-1.5">
                       <Gift className="w-3.5 h-3.5" />
-                      Pague 4 Leve 5
+                      {promoLabel}
                     </span>
                     <span>- R$ {promotionDiscount.toFixed(2)}</span>
                   </div>

@@ -31,6 +31,23 @@ interface CartState {
   removeCoupon: () => void;
 }
 
+/**
+ * Detecta o tipo de camisa pelo NOME DO PRODUTO.
+ * Ex: "Camisa Oversize / Akatsuki" → oversized
+ *     "Camisa Tradicional / Pokémon" → tradicional
+ */
+function isOversized(item: CartItem): boolean {
+  return item.name.toLowerCase().includes('oversize');
+}
+
+function isTradicional(item: CartItem): boolean {
+  return item.name.toLowerCase().includes('tradicional');
+}
+
+/**
+ * Calcula o preço final consultando a tabela verdade (promotions.ts).
+ * Prioridade: promotional_price da API > promoção percentual ativa
+ */
 function calculateProductFinalPrice(product: Product): number {
   if (product.promotional_price && product.promotional_price < product.price) {
     return product.promotional_price;
@@ -39,6 +56,16 @@ function calculateProductFinalPrice(product: Product): number {
   const percentagePromo = product.applicable_promotions?.find(p => p.type === 'percentage');
   if (percentagePromo && percentagePromo.value) {
     return product.price * (1 - percentagePromo.value / 100);
+  }
+
+  // Fallback: consulta direta à tabela verdade
+  // Garante consistência mesmo para itens do localStorage sem applicable_promotions atualizado
+  const activePromos = getActivePromotions();
+  const globalPercentagePromo = activePromos.find(
+    p => p.type === 'percentage' && p.applies_to === 'all'
+  );
+  if (globalPercentagePromo && globalPercentagePromo.value) {
+    return product.price * (1 - globalPercentagePromo.value / 100);
   }
 
   return product.price;
@@ -73,12 +100,7 @@ export const useCartStore = create<CartState>()(
           set({
             items: [
               ...items,
-              {
-                ...product,
-                quantity: 1,
-                selectedSize: size,
-                finalPrice,
-              },
+              { ...product, quantity: 1, selectedSize: size, finalPrice },
             ],
             isOpen: true,
           });
@@ -111,24 +133,60 @@ export const useCartStore = create<CartState>()(
       getCartTotals: () => {
         const { items, appliedCoupon } = get();
 
-        const subtotal = items.reduce((total, item) => {
-          return total + (item.finalPrice * item.quantity);
-        }, 0);
+        // Subtotal usa finalPrice (já com desconto percentual aplicado)
+        const subtotal = items.reduce(
+          (total, item) => total + item.finalPrice * item.quantity,
+          0
+        );
 
-        // ✅ Consulta getActivePromotions() — respeita enabled, start_date e end_date
+        // ✅ Consulta a tabela verdade
         const activePromotions = getActivePromotions();
         const buyXGetYPromo = activePromotions.find(p => p.type === 'buy_x_get_y');
 
         let promotionDiscount = 0;
+
         if (buyXGetYPromo) {
-          const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-          if (totalItems >= (buyXGetYPromo.min_quantity ?? 5)) {
-            const sortedItems = [...items].sort((a, b) => a.finalPrice - b.finalPrice);
-            promotionDiscount = sortedItems[0]?.finalPrice ?? 0;
+          const promoName = buyXGetYPromo.name.toLowerCase();
+          const isOversizedTradicionaPromo =
+            promoName.includes('oversize') || promoName.includes('tradicional');
+
+          if (isOversizedTradicionaPromo) {
+            // ✅ Detecta pelo nome do produto (ex: "Camisa Oversize / Akatsuki")
+            const oversizedItems = items.filter(isOversized);
+            const traditionalItems = items.filter(isTradicional);
+
+            const oversizedCount = oversizedItems.reduce((acc, item) => acc + item.quantity, 0);
+            const minQtyRequired = buyXGetYPromo.min_quantity || 2;
+            const itemsToGiveFree = buyXGetYPromo.discount_quantity || 1;
+            const freeCount = Math.floor(oversizedCount / minQtyRequired) * itemsToGiveFree;
+
+            if (freeCount > 0 && traditionalItems.length > 0) {
+              // Lista plana dos preços das tradicionais, do mais barato ao mais caro
+              const allTraditionalPrices: number[] = [];
+              traditionalItems.forEach(item => {
+                for (let i = 0; i < item.quantity; i++) {
+                  allTraditionalPrices.push(item.finalPrice);
+                }
+              });
+              allTraditionalPrices.sort((a, b) => a - b);
+
+              const maxFree = Math.min(freeCount, allTraditionalPrices.length);
+              for (let i = 0; i < maxFree; i++) {
+                promotionDiscount += allTraditionalPrices[i];
+              }
+            }
+          } else {
+            // Lógica genérica: Pague X Leve Y (ex: Pague 4 Leve 5)
+            const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+            const minQty = buyXGetYPromo.min_quantity ?? 5;
+            if (totalItems >= minQty) {
+              const sortedByPrice = [...items].sort((a, b) => a.finalPrice - b.finalPrice);
+              promotionDiscount = sortedByPrice[0]?.finalPrice ?? 0;
+            }
           }
         }
 
-        // Desconto do cupom
+        // Desconto de cupom
         let couponDiscount = 0;
         if (appliedCoupon) {
           const discountValue = parseFloat(appliedCoupon.value);
@@ -143,13 +201,7 @@ export const useCartStore = create<CartState>()(
         const totalDiscount = promotionDiscount + couponDiscount;
         const total = Math.max(0, subtotal - totalDiscount);
 
-        return {
-          subtotal,
-          promotionDiscount,
-          couponDiscount,
-          totalDiscount,
-          total,
-        };
+        return { subtotal, promotionDiscount, couponDiscount, totalDiscount, total };
       },
 
       getCartCount: () => {

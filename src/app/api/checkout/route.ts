@@ -4,10 +4,137 @@ import { getActivePromotions } from "@/lib/config/promotions";
 const STORE_ID = process.env.NUVEMSHOP_USER_ID;
 const ACCESS_TOKEN = process.env.NUVEMSHOP_ACCESS_TOKEN;
 
+const API_HEADERS = {
+  "Authentication": `bearer ${ACCESS_TOKEN}`,
+  "Content-Type": "application/json",
+  "User-Agent": "Sentai Headless Store (sentaitshirt@gmail.com)",
+};
+
+// ─────────────────────────────────────────────────────────────
+// Helpers de detecção de tipo de camiseta (mesmo critério do cart-store)
+// ─────────────────────────────────────────────────────────────
+function isOversized(name: string): boolean {
+  return name.toLowerCase().includes("oversize");
+}
+
+function isTradicional(name: string): boolean {
+  return name.toLowerCase().includes("tradicional");
+}
+
+// ─────────────────────────────────────────────────────────────
+// Calcula o desconto de promoção buy_x_get_y com base nos itens
+// Retorna o valor absoluto do desconto em R$
+// ─────────────────────────────────────────────────────────────
+function calculateBuyXGetYDiscount(items: any[], promo: any): number {
+  const promoName = promo.name.toLowerCase();
+  const isOversizedTradicionaPromo =
+    promoName.includes("oversize") || promoName.includes("tradicional");
+
+  if (isOversizedTradicionaPromo) {
+    const oversizedItems = items.filter(i => isOversized(i.name));
+    const traditionalItems = items.filter(i => isTradicional(i.name));
+
+    const oversizedCount = oversizedItems.reduce((acc: number, i: any) => acc + i.quantity, 0);
+    const minQtyRequired = promo.min_quantity || 2;
+    const itemsToGiveFree = promo.discount_quantity || 1;
+    const freeCount = Math.floor(oversizedCount / minQtyRequired) * itemsToGiveFree;
+
+    if (freeCount > 0 && traditionalItems.length > 0) {
+      const allTraditionalPrices: number[] = [];
+      traditionalItems.forEach((item: any) => {
+        for (let i = 0; i < item.quantity; i++) {
+          allTraditionalPrices.push(item.finalPrice);
+        }
+      });
+      allTraditionalPrices.sort((a, b) => a - b);
+
+      let discount = 0;
+      const maxFree = Math.min(freeCount, allTraditionalPrices.length);
+      for (let i = 0; i < maxFree; i++) {
+        discount += allTraditionalPrices[i];
+      }
+      return discount;
+    }
+    return 0;
+  }
+
+  // Lógica genérica: Pague X Leve Y
+  const totalItems = items.reduce((sum: number, i: any) => sum + i.quantity, 0);
+  const minQty = promo.min_quantity ?? 5;
+  if (totalItems >= minQty) {
+    const sorted = [...items].sort((a: any, b: any) => a.finalPrice - b.finalPrice);
+    return sorted[0]?.finalPrice ?? 0;
+  }
+
+  return 0;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Cria um cupom temporário de uso único na Nuvemshop
+// Retorna o código do cupom ou null se falhar
+// ─────────────────────────────────────────────────────────────
+async function createTemporaryCoupon(discountValue: number, label: string): Promise<string | null> {
+  const code = `PROMO-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+
+  const payload = {
+    code,
+    type: "absolute",
+    value: discountValue.toFixed(2),
+    max_uses: 1,
+    valid: true,
+    combines_with_other_discounts: false,
+  };
+
+  console.log(`🎟️ Criando cupom temporário: ${code} = R$ ${discountValue.toFixed(2)} (${label})`);
+
+  const res = await fetch(`https://api.nuvemshop.com.br/v1/${STORE_ID}/coupons`, {
+    method: "POST",
+    headers: API_HEADERS,
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.error(`❌ Falha ao criar cupom temporário (${res.status}):`, err);
+    return null;
+  }
+
+  const data = await res.json();
+  console.log(`✅ Cupom temporário criado: ${data.code} (id: ${data.id})`);
+  return data.code;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Remove o cupom temporário após uso (fire-and-forget)
+// ─────────────────────────────────────────────────────────────
+async function deleteTemporaryCoupon(code: string): Promise<void> {
+  // Primeiro busca o ID pelo código
+  const listRes = await fetch(
+    `https://api.nuvemshop.com.br/v1/${STORE_ID}/coupons?code=${encodeURIComponent(code)}`,
+    { headers: API_HEADERS }
+  );
+  if (!listRes.ok) return;
+
+  const coupons = await listRes.json();
+  const coupon = Array.isArray(coupons) ? coupons.find((c: any) => c.code === code) : null;
+  if (!coupon) return;
+
+  await fetch(`https://api.nuvemshop.com.br/v1/${STORE_ID}/coupons/${coupon.id}`, {
+    method: "DELETE",
+    headers: API_HEADERS,
+  });
+  console.log(`🗑️ Cupom temporário ${code} removido.`);
+}
+
+// ─────────────────────────────────────────────────────────────
+// POST /api/checkout
+// ─────────────────────────────────────────────────────────────
 export async function POST(request: Request) {
+  let temporaryCouponCode: string | null = null;
+
   try {
     const body = await request.json();
-    const { items } = body;
+    const { items, couponCode: clientCouponCode } = body;
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Carrinho vazio" }, { status: 400 });
@@ -16,54 +143,57 @@ export async function POST(request: Request) {
     console.log("\n=== 🛒 INICIANDO CHECKOUT ===");
     console.log("📦 Items recebidos:", items.length);
 
-    const totalItems = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
-    const subtotal = items.reduce((sum: number, item: any) => {
-      return sum + (item.finalPrice * item.quantity);
-    }, 0);
-
+    const subtotal = items.reduce(
+      (sum: number, item: any) => sum + item.finalPrice * item.quantity,
+      0
+    );
     console.log("💰 Subtotal:", subtotal.toFixed(2));
-    console.log("🛒 Total de itens:", totalItems);
 
-    // --- Monta os produtos ---
+    // ── Monta os produtos ──────────────────────────────────────
     const products = items.map((item: any) => {
       let correctVariantId = item.id;
 
-      if (item.variants && item.variants.length > 0) {
+      if (item.variants?.length > 0) {
         correctVariantId = item.variants[0].id;
-
         if (item.selectedSize) {
-          const matchedVariant = item.variants.find((v: any) =>
+          const matched = item.variants.find((v: any) =>
             v.values?.some((val: any) => val.pt === item.selectedSize)
           );
-          if (matchedVariant) correctVariantId = matchedVariant.id;
+          if (matched) correctVariantId = matched.id;
         }
       }
 
       console.log(`   - ${item.name}: variant ${correctVariantId} x ${item.quantity}`);
-
-      return {
-        variant_id: correctVariantId,
-        quantity: item.quantity || 1,
-      };
+      return { variant_id: correctVariantId, quantity: item.quantity || 1 };
     });
 
-    // ✅ Consulta getActivePromotions() — respeita enabled, start_date e end_date
+    // ── Verifica promoções ativas (tabela verdade) ─────────────
     const activePromotions = getActivePromotions();
-    const buyXGetYPromo = activePromotions.find(p => p.type === 'buy_x_get_y');
+    const buyXGetYPromo = activePromotions.find(p => p.type === "buy_x_get_y");
 
-    let buyXGetYDiscount = 0;
-    if (buyXGetYPromo) {
-      const minQty = buyXGetYPromo.min_quantity ?? 5;
-      if (totalItems >= minQty) {
-        const sorted = [...items].sort((a: any, b: any) => a.finalPrice - b.finalPrice);
-        buyXGetYDiscount = sorted[0]?.finalPrice ?? 0;
-        console.log(`🎁 Pague 4 Leve 5 ativa: desconto de R$ ${buyXGetYDiscount.toFixed(2)}`);
+    const promoDiscount = buyXGetYPromo
+      ? calculateBuyXGetYDiscount(items, buyXGetYPromo)
+      : 0;
+
+    console.log(
+      promoDiscount > 0
+        ? `🎁 Desconto de promoção calculado: R$ ${promoDiscount.toFixed(2)}`
+        : "ℹ️ Nenhuma promoção buy_x_get_y aplicável."
+    );
+
+    // ── Cria cupom temporário se houver desconto de promoção ───
+    if (promoDiscount > 0) {
+      temporaryCouponCode = await createTemporaryCoupon(
+        promoDiscount,
+        buyXGetYPromo!.name
+      );
+
+      if (!temporaryCouponCode) {
+        console.warn("⚠️ Não foi possível criar cupom temporário. Prosseguindo sem desconto de promoção.");
       }
-    } else {
-      console.log("ℹ️ Promoção Pague 4 Leve 5 inativa — nenhum desconto aplicado.");
     }
 
-    // --- Monta o payload do Draft Order ---
+    // ── Monta payload do Draft Order ──────────────────────────
     const draftOrderPayload: any = {
       contact_email: "cliente@exemplo.com",
       contact_name: "Cliente",
@@ -73,30 +203,39 @@ export async function POST(request: Request) {
       send_fulfillment_email: false,
     };
 
-    if (buyXGetYDiscount > 0) {
-      draftOrderPayload.discount = parseFloat(buyXGetYDiscount.toFixed(2));
-      console.log(`✅ discount: R$ ${draftOrderPayload.discount} injetado no draft order`);
+    // Injeta o cupom de promoção (temporário) se criado com sucesso
+    // Obs: a Nuvemshop aceita apenas 1 cupom por pedido.
+    // Se o cliente também tiver um cupom manual, o de promoção tem prioridade aqui.
+    if (temporaryCouponCode) {
+      draftOrderPayload.coupon = temporaryCouponCode;
+      console.log(`✅ Cupom de promoção injetado no draft order: ${temporaryCouponCode}`);
+    } else if (clientCouponCode) {
+      draftOrderPayload.coupon = clientCouponCode;
+      console.log(`✅ Cupom do cliente injetado no draft order: ${clientCouponCode}`);
     }
 
     console.log("\n📤 Enviando payload:", JSON.stringify(draftOrderPayload, null, 2));
 
-    const apiUrl = `https://api.nuvemshop.com.br/v1/${STORE_ID}/draft_orders`;
-
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Authentication": `bearer ${ACCESS_TOKEN}`,
-        "Content-Type": "application/json",
-        "User-Agent": "Sentai Headless Store (sentaitshirt@gmail.com)",
-      },
-      body: JSON.stringify(draftOrderPayload),
-    });
+    // ── Cria o Draft Order ────────────────────────────────────
+    const response = await fetch(
+      `https://api.nuvemshop.com.br/v1/${STORE_ID}/draft_orders`,
+      {
+        method: "POST",
+        headers: API_HEADERS,
+        body: JSON.stringify(draftOrderPayload),
+      }
+    );
 
     const data = await response.json();
     console.log("\n📥 Response status:", response.status);
 
     if (!response.ok) {
       console.error("❌ Erro da API:", JSON.stringify(data, null, 2));
+
+      // Limpa o cupom temporário se o draft order falhou
+      if (temporaryCouponCode) {
+        deleteTemporaryCoupon(temporaryCouponCode).catch(() => {});
+      }
 
       const errorDetails = JSON.stringify(data);
       if (
@@ -142,7 +281,6 @@ export async function POST(request: Request) {
     console.log("💰 Total retornado:", data.total);
 
     let checkoutUrl = data.checkout_url;
-
     if (!checkoutUrl) {
       throw new Error("Draft Order criado mas sem checkout_url");
     }
@@ -154,7 +292,7 @@ export async function POST(request: Request) {
 
     console.log("\n✅ SUCCESS!");
     console.log("🔗 Checkout URL:", checkoutUrl);
-    console.log(`💰 Total esperado: R$ ${(subtotal - buyXGetYDiscount).toFixed(2)}`);
+    console.log(`💰 Total esperado: R$ ${(subtotal - promoDiscount).toFixed(2)}`);
     console.log(`💰 Total Nuvemshop: R$ ${data.total}`);
 
     return NextResponse.json({ url: checkoutUrl });
@@ -162,6 +300,11 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("\n❌ ERRO INTERNO:", error.message);
     console.error("Stack trace:", error.stack);
+
+    // Limpa o cupom temporário em caso de erro inesperado
+    if (temporaryCouponCode) {
+      deleteTemporaryCoupon(temporaryCouponCode).catch(() => {});
+    }
 
     return NextResponse.json(
       {
